@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+  --color-cyan: #00d4ff;
+  --color-amber: #ff6b35;
+  --color-bg: #0f0f1a;
+  --color-bg-light: #161625;
+  --color-bg-card: #1a1a2e;
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-error: #ef4444;
+  --color-text: #e2e8f0;
+  --color-muted: #94a3b8;
+  --color-border: rgba(255,255,255,0.1);
+  --color-surface: rgba(255,255,255,0.05);
+}
+
+:root {
+  --cyan: #00d4ff;
+  --amber: #ff6b35;
+  --bg: #0f0f1a;
+  --bg-light: #161625;
+  --bg-card: #1a1a2e;
+  --success: #22c55e;
+  --warning: #eab308;
+  --error: #ef4444;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --border: rgba(255,255,255,0.1);
+  --surface: rgba(255,255,255,0.05);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+/* Glass card effect */
+.glass {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+}
+
+/* Glow effects */
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* Sidebar transition */
+.sidebar-transition {
+  transition: width 200ms ease-in-out;
+}

@@ -1,0 +1,110 @@
+{
+    "data": {
+        "logs": [
+            {
+                "age_seconds": 19034.6,
+                "exists": true,
+                "likely_active": false,
+                "modified": 1770823380.368361,
+                "name": "v1_robust",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_robust.log",
+                "size_bytes": 10212,
+                "size_kb": 10.0
+            },
+            {
+                "age_seconds": 76964.3,
+                "exists": true,
+                "likely_active": false,
+                "modified": 1770765450.729094,
+                "name": "v1_generation",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_generation.log",
+                "size_bytes": 943,
+                "size_kb": 0.9
+            },
+            {
+                "age_seconds": 465.6,
+                "exists": true,
+                "likely_active": false,
+                "modified": 1770841949.4532547,
+                "name": "v2_enhanced",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced.log",
+                "size_bytes": 3652,
+                "size_kb": 3.6
+            },
+            {
+                "age_seconds": 80141.7,
+                "exists": true,
+                "likely_active": false,
+                "modified": 1770762273.342718,
+                "name": "v2_watcher",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_watcher.log",
+                "size_bytes": 45,
+                "size_kb": 0.0
+            },
+            {
+                "exists": false,
+                "name": "narration_voiced",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\narration_voiced.log"
+            },
+            {
+                "age_seconds": 19019.4,
+                "exists": true,
+                "likely_active": false,
+                "modified": 1770823395.650581,
+                "name": "watcher",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\watcher.log",
+                "size_bytes": 435,
+                "size_kb": 0.4
+            },
+            {
+                "age_seconds": 1182.2,
+                "exists": true,
+                "likely_active": false,
+                "modified": 1770841232.7687304,
+                "name": "stitch",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\stitch.log",
+                "size_bytes": 6525,
+                "size_kb": 6.4
+            },
+            {
+                "age_seconds": 80230.8,
+                "exists": true,
+                "likely_active": false,
+                "modified": 1770762184.1904316,
+                "name": "audio_gen",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio_gen_expanded.log",
+                "size_bytes": 13368,
+                "size_kb": 13.1
+            },
+            {
+                "age_seconds": 23.8,
+                "exists": true,
+                "likely_active": true,
+                "modified": 1770842391.1809638,
+                "name": "comfyui_restart",
+                "path": "C:\\Users\\deepc\\film-pipeline\\output\\comfyui_restart.log",
+                "size_bytes": 775736,
+                "size_kb": 757.6
+            }
+        ],
+        "recent": [
+            "[2/25] P1_S01_002",
+            "[15:32:29] [10/25] P1_S03_003 - Seed: 1192720934",
+            "[15:32:29]   Prompt: cinematic composition, masterful cinematography, film grain, realistic lighting, natural textures, c...",
+            "[15:32:29]   Queued: bceaec09-4c06-44f1-9160-fef745ea5d4d",
+            "[15:32:29]   Queued: bceaec09-4c06-44f1-9160-fef745ea5d4d",
+            "[15:20:32] [STITCH] ERROR: Stitching failed.",
+            "[10:23:15] [WATCHER] V1 COMPLETE - detected DONE in log",
+            "[10:23:15] [WATCHER] ==================================================",
+            "[10:23:15] [WATCHER] PHASE 2: V2 Enhanced Generation",
+            "[10:23:15] [WATCHER] Starting V2 Enhanced generation...",
+            "[10:23:15] [WATCHER] V2 started (PID: 118316)",
+            "[10:23:00]   Saved: C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S07\\P1_S07_004_00003.mp4 (221.9 KB) in 2102s",
+            "[10:23:00] DONE: 15 completed, 10 skipped, 0 failed",
+            "[09:47:58] [25/25] P1_S07_004 - Seed: 569342718",
+            "[09:47:58]   Prompt: cinematic anime, detailed character art, dramatic lighting, film grain, anamorphic lens, dark dystop..."
+        ]
+    },
+    "message": "ok",
+    "status": "ok"
+}

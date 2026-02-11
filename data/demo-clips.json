@@ -1,0 +1,1530 @@
+{
+    "data": {
+        "clips": [
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_001.wav",
+                    "relative_path": "audio\\P1_S01_001.wav",
+                    "size_bytes": 347564
+                },
+                "clip": {
+                    "filename": "P1_S01_001_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S01\\P1_S01_001_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S01\\P1_S01_001_00004.mp4",
+                    "size_bytes": 1143502,
+                    "size_kb": 1116.7,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_001",
+                "v1_clip": {
+                    "filename": "P1_S01_001_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S01\\P1_S01_001_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S01\\P1_S01_001_00003.mp4",
+                    "size_bytes": 242399,
+                    "size_kb": 236.7,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_002.wav",
+                    "relative_path": "audio\\P1_S01_002.wav",
+                    "size_bytes": 395564
+                },
+                "clip": {
+                    "filename": "P1_S01_002_00005.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S01\\P1_S01_002_00005.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S01\\P1_S01_002_00005.mp4",
+                    "size_bytes": 1442748,
+                    "size_kb": 1408.9,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_002",
+                "v1_clip": {
+                    "filename": "P1_S01_002_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S01\\P1_S01_002_00004.mp4",
+                    "relative_path": "v1_standard\\P1\\S01\\P1_S01_002_00004.mp4",
+                    "size_bytes": 550335,
+                    "size_kb": 537.4,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_003.wav",
+                    "relative_path": "audio\\P1_S01_003.wav",
+                    "size_bytes": 265004
+                },
+                "clip": {
+                    "filename": "P1_S01_003_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S01\\P1_S01_003_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S01\\P1_S01_003_00004.mp4",
+                    "size_bytes": 1018101,
+                    "size_kb": 994.2,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_003",
+                "v1_clip": {
+                    "filename": "P1_S01_003_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S01\\P1_S01_003_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S01\\P1_S01_003_00003.mp4",
+                    "size_bytes": 462507,
+                    "size_kb": 451.7,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_004.wav",
+                    "relative_path": "audio\\P1_S01_004.wav",
+                    "size_bytes": 289964
+                },
+                "clip": {
+                    "filename": "P1_S01_004_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S01\\P1_S01_004_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S01\\P1_S01_004_00004.mp4",
+                    "size_bytes": 877728,
+                    "size_kb": 857.2,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_004",
+                "v1_clip": {
+                    "filename": "P1_S01_004_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S01\\P1_S01_004_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S01\\P1_S01_004_00003.mp4",
+                    "size_bytes": 364994,
+                    "size_kb": 356.4,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_005.wav",
+                    "relative_path": "audio\\P1_S01_005.wav",
+                    "size_bytes": 1020376
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_006.wav",
+                    "relative_path": "audio\\P1_S01_006.wav",
+                    "size_bytes": 914536
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_007.wav",
+                    "relative_path": "audio\\P1_S01_007.wav",
+                    "size_bytes": 965340
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_007"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S01_008.wav",
+                    "relative_path": "audio\\P1_S01_008.wav",
+                    "size_bytes": 1102932
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S01",
+                "shot_id": "P1_S01_008"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S02_001.wav",
+                    "relative_path": "audio\\P1_S02_001.wav",
+                    "size_bytes": 276524
+                },
+                "clip": {
+                    "filename": "P1_S02_001_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S02\\P1_S02_001_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S02\\P1_S02_001_00004.mp4",
+                    "size_bytes": 331028,
+                    "size_kb": 323.3,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S02",
+                "shot_id": "P1_S02_001",
+                "v1_clip": {
+                    "filename": "P1_S02_001_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S02\\P1_S02_001_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S02\\P1_S02_001_00003.mp4",
+                    "size_bytes": 222275,
+                    "size_kb": 217.1,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S02_002.wav",
+                    "relative_path": "audio\\P1_S02_002.wav",
+                    "size_bytes": 385964
+                },
+                "clip": {
+                    "filename": "P1_S02_002_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S02\\P1_S02_002_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S02\\P1_S02_002_00004.mp4",
+                    "size_bytes": 607455,
+                    "size_kb": 593.2,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S02",
+                "shot_id": "P1_S02_002",
+                "v1_clip": {
+                    "filename": "P1_S02_002_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S02\\P1_S02_002_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S02\\P1_S02_002_00003.mp4",
+                    "size_bytes": 246681,
+                    "size_kb": 240.9,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S02_003.wav",
+                    "relative_path": "audio\\P1_S02_003.wav",
+                    "size_bytes": 318764
+                },
+                "clip": {
+                    "filename": "P1_S02_003_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S02\\P1_S02_003_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S02\\P1_S02_003_00004.mp4",
+                    "size_bytes": 674236,
+                    "size_kb": 658.4,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S02",
+                "shot_id": "P1_S02_003",
+                "v1_clip": {
+                    "filename": "P1_S02_003_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S02\\P1_S02_003_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S02\\P1_S02_003_00003.mp4",
+                    "size_bytes": 344618,
+                    "size_kb": 336.5,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S02_004.wav",
+                    "relative_path": "audio\\P1_S02_004.wav",
+                    "size_bytes": 1050012
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S02",
+                "shot_id": "P1_S02_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S02_005.wav",
+                    "relative_path": "audio\\P1_S02_005.wav",
+                    "size_bytes": 925120
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S02",
+                "shot_id": "P1_S02_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S02_006.wav",
+                    "relative_path": "audio\\P1_S02_006.wav",
+                    "size_bytes": 961106
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S02",
+                "shot_id": "P1_S02_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_001.wav",
+                    "relative_path": "audio\\P1_S03_001.wav",
+                    "size_bytes": 324524
+                },
+                "clip": {
+                    "filename": "P1_S03_001_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S03\\P1_S03_001_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S03\\P1_S03_001_00004.mp4",
+                    "size_bytes": 1126697,
+                    "size_kb": 1100.3,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_001",
+                "v1_clip": {
+                    "filename": "P1_S03_001_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S03\\P1_S03_001_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S03\\P1_S03_001_00003.mp4",
+                    "size_bytes": 389583,
+                    "size_kb": 380.5,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_002.wav",
+                    "relative_path": "audio\\P1_S03_002.wav",
+                    "size_bytes": 324524
+                },
+                "clip": {
+                    "filename": "P1_S03_002_00004.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v2_enhanced\\P1\\S03\\P1_S03_002_00004.mp4",
+                    "relative_path": "v2_enhanced\\P1\\S03\\P1_S03_002_00004.mp4",
+                    "size_bytes": 698972,
+                    "size_kb": 682.6,
+                    "source": "v2"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_002",
+                "v1_clip": {
+                    "filename": "P1_S03_002_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S03\\P1_S03_002_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S03\\P1_S03_002_00003.mp4",
+                    "size_bytes": 287532,
+                    "size_kb": 280.8,
+                    "source": "v1"
+                }
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_003.wav",
+                    "relative_path": "audio\\P1_S03_003.wav",
+                    "size_bytes": 320684
+                },
+                "clip": {
+                    "filename": "P1_S03_003_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S03\\P1_S03_003_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S03\\P1_S03_003_00003.mp4",
+                    "size_bytes": 265865,
+                    "size_kb": 259.6,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_004.wav",
+                    "relative_path": "audio\\P1_S03_004.wav",
+                    "size_bytes": 261164
+                },
+                "clip": {
+                    "filename": "P1_S03_004_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S03\\P1_S03_004_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S03\\P1_S03_004_00003.mp4",
+                    "size_bytes": 231590,
+                    "size_kb": 226.2,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_005.wav",
+                    "relative_path": "audio\\P1_S03_005.wav",
+                    "size_bytes": 1020376
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_006.wav",
+                    "relative_path": "audio\\P1_S03_006.wav",
+                    "size_bytes": 1166436
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_007.wav",
+                    "relative_path": "audio\\P1_S03_007.wav",
+                    "size_bytes": 1134684
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_007"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_008.wav",
+                    "relative_path": "audio\\P1_S03_008.wav",
+                    "size_bytes": 1100814
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_008"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S03_009.wav",
+                    "relative_path": "audio\\P1_S03_009.wav",
+                    "size_bytes": 1134684
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S03",
+                "shot_id": "P1_S03_009"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S04_001.wav",
+                    "relative_path": "audio\\P1_S04_001.wav",
+                    "size_bytes": 458924
+                },
+                "clip": {
+                    "filename": "P1_S04_001_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S04\\P1_S04_001_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S04\\P1_S04_001_00003.mp4",
+                    "size_bytes": 641162,
+                    "size_kb": 626.1,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S04",
+                "shot_id": "P1_S04_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S04_002.wav",
+                    "relative_path": "audio\\P1_S04_002.wav",
+                    "size_bytes": 324524
+                },
+                "clip": {
+                    "filename": "P1_S04_002_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S04\\P1_S04_002_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S04\\P1_S04_002_00003.mp4",
+                    "size_bytes": 252283,
+                    "size_kb": 246.4,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S04",
+                "shot_id": "P1_S04_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S04_003.wav",
+                    "relative_path": "audio\\P1_S04_003.wav",
+                    "size_bytes": 1187604
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S04",
+                "shot_id": "P1_S04_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S04_004.wav",
+                    "relative_path": "audio\\P1_S04_004.wav",
+                    "size_bytes": 1041544
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S04",
+                "shot_id": "P1_S04_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S04_005.wav",
+                    "relative_path": "audio\\P1_S04_005.wav",
+                    "size_bytes": 971690
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S04",
+                "shot_id": "P1_S04_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_001.wav",
+                    "relative_path": "audio\\P1_S05_001.wav",
+                    "size_bytes": 328364
+                },
+                "clip": {
+                    "filename": "P1_S05_001_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S05\\P1_S05_001_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S05\\P1_S05_001_00003.mp4",
+                    "size_bytes": 845543,
+                    "size_kb": 825.7,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_002.wav",
+                    "relative_path": "audio\\P1_S05_002.wav",
+                    "size_bytes": 257324
+                },
+                "clip": {
+                    "filename": "P1_S05_002_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S05\\P1_S05_002_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S05\\P1_S05_002_00003.mp4",
+                    "size_bytes": 234837,
+                    "size_kb": 229.3,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_003.wav",
+                    "relative_path": "audio\\P1_S05_003.wav",
+                    "size_bytes": 385964
+                },
+                "clip": {
+                    "filename": "P1_S05_003_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S05\\P1_S05_003_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S05\\P1_S05_003_00003.mp4",
+                    "size_bytes": 211187,
+                    "size_kb": 206.2,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_004.wav",
+                    "relative_path": "audio\\P1_S05_004.wav",
+                    "size_bytes": 334124
+                },
+                "clip": {
+                    "filename": "P1_S05_004_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S05\\P1_S05_004_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S05\\P1_S05_004_00003.mp4",
+                    "size_bytes": 168068,
+                    "size_kb": 164.1,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_005.wav",
+                    "relative_path": "audio\\P1_S05_005.wav",
+                    "size_bytes": 353324
+                },
+                "clip": {
+                    "filename": "P1_S05_005_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S05\\P1_S05_005_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S05\\P1_S05_005_00003.mp4",
+                    "size_bytes": 184180,
+                    "size_kb": 179.9,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_006.wav",
+                    "relative_path": "audio\\P1_S05_006.wav",
+                    "size_bytes": 1117750
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_007.wav",
+                    "relative_path": "audio\\P1_S05_007.wav",
+                    "size_bytes": 1329430
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_007"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_008.wav",
+                    "relative_path": "audio\\P1_S05_008.wav",
+                    "size_bytes": 975924
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_008"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S05_009.wav",
+                    "relative_path": "audio\\P1_S05_009.wav",
+                    "size_bytes": 1299794
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S05",
+                "shot_id": "P1_S05_009"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S06_001.wav",
+                    "relative_path": "audio\\P1_S06_001.wav",
+                    "size_bytes": 332204
+                },
+                "clip": {
+                    "filename": "P1_S06_001_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S06\\P1_S06_001_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S06\\P1_S06_001_00003.mp4",
+                    "size_bytes": 307976,
+                    "size_kb": 300.8,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S06",
+                "shot_id": "P1_S06_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S06_002.wav",
+                    "relative_path": "audio\\P1_S06_002.wav",
+                    "size_bytes": 476204
+                },
+                "clip": {
+                    "filename": "P1_S06_002_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S06\\P1_S06_002_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S06\\P1_S06_002_00003.mp4",
+                    "size_bytes": 264179,
+                    "size_kb": 258.0,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S06",
+                "shot_id": "P1_S06_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S06_003.wav",
+                    "relative_path": "audio\\P1_S06_003.wav",
+                    "size_bytes": 483884
+                },
+                "clip": {
+                    "filename": "P1_S06_003_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S06\\P1_S06_003_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S06\\P1_S06_003_00003.mp4",
+                    "size_bytes": 244258,
+                    "size_kb": 238.5,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S06",
+                "shot_id": "P1_S06_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S06_004.wav",
+                    "relative_path": "audio\\P1_S06_004.wav",
+                    "size_bytes": 984390
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S06",
+                "shot_id": "P1_S06_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S06_005.wav",
+                    "relative_path": "audio\\P1_S06_005.wav",
+                    "size_bytes": 1033078
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S06",
+                "shot_id": "P1_S06_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S06_006.wav",
+                    "relative_path": "audio\\P1_S06_006.wav",
+                    "size_bytes": 1052128
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S06",
+                "shot_id": "P1_S06_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_001.wav",
+                    "relative_path": "audio\\P1_S07_001.wav",
+                    "size_bytes": 299564
+                },
+                "clip": {
+                    "filename": "P1_S07_001_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S07\\P1_S07_001_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S07\\P1_S07_001_00003.mp4",
+                    "size_bytes": 197177,
+                    "size_kb": 192.6,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_002.wav",
+                    "relative_path": "audio\\P1_S07_002.wav",
+                    "size_bytes": 399404
+                },
+                "clip": {
+                    "filename": "P1_S07_002_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S07\\P1_S07_002_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S07\\P1_S07_002_00003.mp4",
+                    "size_bytes": 241399,
+                    "size_kb": 235.7,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_003.wav",
+                    "relative_path": "audio\\P1_S07_003.wav",
+                    "size_bytes": 505004
+                },
+                "clip": {
+                    "filename": "P1_S07_003_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S07\\P1_S07_003_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S07\\P1_S07_003_00003.mp4",
+                    "size_bytes": 416202,
+                    "size_kb": 406.4,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_004.wav",
+                    "relative_path": "audio\\P1_S07_004.wav",
+                    "size_bytes": 457004
+                },
+                "clip": {
+                    "filename": "P1_S07_004_00003.mp4",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\v1_standard\\P1\\S07\\P1_S07_004_00003.mp4",
+                    "relative_path": "v1_standard\\P1\\S07\\P1_S07_004_00003.mp4",
+                    "size_bytes": 227247,
+                    "size_kb": 221.9,
+                    "source": "v1"
+                },
+                "has_audio": true,
+                "has_clip": true,
+                "has_composite": true,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_005.wav",
+                    "relative_path": "audio\\P1_S07_005.wav",
+                    "size_bytes": 1088114
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_006.wav",
+                    "relative_path": "audio\\P1_S07_006.wav",
+                    "size_bytes": 1105048
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_007.wav",
+                    "relative_path": "audio\\P1_S07_007.wav",
+                    "size_bytes": 1428918
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_007"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_008.wav",
+                    "relative_path": "audio\\P1_S07_008.wav",
+                    "size_bytes": 1073296
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_008"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S07_009.wav",
+                    "relative_path": "audio\\P1_S07_009.wav",
+                    "size_bytes": 1306144
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S07",
+                "shot_id": "P1_S07_009"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S08_001.wav",
+                    "relative_path": "audio\\P1_S08_001.wav",
+                    "size_bytes": 994974
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S08",
+                "shot_id": "P1_S08_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S08_002.wav",
+                    "relative_path": "audio\\P1_S08_002.wav",
+                    "size_bytes": 1066946
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S08",
+                "shot_id": "P1_S08_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S08_003.wav",
+                    "relative_path": "audio\\P1_S08_003.wav",
+                    "size_bytes": 838332
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S08",
+                "shot_id": "P1_S08_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S08_004.wav",
+                    "relative_path": "audio\\P1_S08_004.wav",
+                    "size_bytes": 914536
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S08",
+                "shot_id": "P1_S08_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S08_005.wav",
+                    "relative_path": "audio\\P1_S08_005.wav",
+                    "size_bytes": 1052128
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S08",
+                "shot_id": "P1_S08_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S08_006.wav",
+                    "relative_path": "audio\\P1_S08_006.wav",
+                    "size_bytes": 1115632
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S08",
+                "shot_id": "P1_S08_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S09_001.wav",
+                    "relative_path": "audio\\P1_S09_001.wav",
+                    "size_bytes": 969574
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S09",
+                "shot_id": "P1_S09_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S09_002.wav",
+                    "relative_path": "audio\\P1_S09_002.wav",
+                    "size_bytes": 939938
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S09",
+                "shot_id": "P1_S09_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S09_003.wav",
+                    "relative_path": "audio\\P1_S09_003.wav",
+                    "size_bytes": 1240524
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S09",
+                "shot_id": "P1_S09_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S09_004.wav",
+                    "relative_path": "audio\\P1_S09_004.wav",
+                    "size_bytes": 1014026
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S09",
+                "shot_id": "P1_S09_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S09_005.wav",
+                    "relative_path": "audio\\P1_S09_005.wav",
+                    "size_bytes": 1117750
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S09",
+                "shot_id": "P1_S09_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S10_001.wav",
+                    "relative_path": "audio\\P1_S10_001.wav",
+                    "size_bytes": 958990
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S10",
+                "shot_id": "P1_S10_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S10_002.wav",
+                    "relative_path": "audio\\P1_S10_002.wav",
+                    "size_bytes": 1126216
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S10",
+                "shot_id": "P1_S10_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S10_003.wav",
+                    "relative_path": "audio\\P1_S10_003.wav",
+                    "size_bytes": 1282860
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S10",
+                "shot_id": "P1_S10_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S10_004.wav",
+                    "relative_path": "audio\\P1_S10_004.wav",
+                    "size_bytes": 935704
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S10",
+                "shot_id": "P1_S10_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S11_001.wav",
+                    "relative_path": "audio\\P1_S11_001.wav",
+                    "size_bytes": 1073296
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S11",
+                "shot_id": "P1_S11_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S11_002.wav",
+                    "relative_path": "audio\\P1_S11_002.wav",
+                    "size_bytes": 1011910
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S11",
+                "shot_id": "P1_S11_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S11_003.wav",
+                    "relative_path": "audio\\P1_S11_003.wav",
+                    "size_bytes": 1246874
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S11",
+                "shot_id": "P1_S11_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S11_004.wav",
+                    "relative_path": "audio\\P1_S11_004.wav",
+                    "size_bytes": 1134684
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S11",
+                "shot_id": "P1_S11_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S11_005.wav",
+                    "relative_path": "audio\\P1_S11_005.wav",
+                    "size_bytes": 1005558
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S11",
+                "shot_id": "P1_S11_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S11_006.wav",
+                    "relative_path": "audio\\P1_S11_006.wav",
+                    "size_bytes": 1177020
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S11",
+                "shot_id": "P1_S11_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S11_007.wav",
+                    "relative_path": "audio\\P1_S11_007.wav",
+                    "size_bytes": 929354
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S11",
+                "shot_id": "P1_S11_007"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S12_001.wav",
+                    "relative_path": "audio\\P1_S12_001.wav",
+                    "size_bytes": 1058478
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S12",
+                "shot_id": "P1_S12_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S12_002.wav",
+                    "relative_path": "audio\\P1_S12_002.wav",
+                    "size_bytes": 1304028
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S12",
+                "shot_id": "P1_S12_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S12_003.wav",
+                    "relative_path": "audio\\P1_S12_003.wav",
+                    "size_bytes": 1329430
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S12",
+                "shot_id": "P1_S12_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S12_004.wav",
+                    "relative_path": "audio\\P1_S12_004.wav",
+                    "size_bytes": 1136800
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S12",
+                "shot_id": "P1_S12_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S12_005.wav",
+                    "relative_path": "audio\\P1_S12_005.wav",
+                    "size_bytes": 1149502
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S12",
+                "shot_id": "P1_S12_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S12_006.wav",
+                    "relative_path": "audio\\P1_S12_006.wav",
+                    "size_bytes": 1407750
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S12",
+                "shot_id": "P1_S12_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S13_001.wav",
+                    "relative_path": "audio\\P1_S13_001.wav",
+                    "size_bytes": 1397166
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S13",
+                "shot_id": "P1_S13_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S13_002.wav",
+                    "relative_path": "audio\\P1_S13_002.wav",
+                    "size_bytes": 1105048
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S13",
+                "shot_id": "P1_S13_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S13_003.wav",
+                    "relative_path": "audio\\P1_S13_003.wav",
+                    "size_bytes": 1365414
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S13",
+                "shot_id": "P1_S13_003"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S13_004.wav",
+                    "relative_path": "audio\\P1_S13_004.wav",
+                    "size_bytes": 1395050
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S13",
+                "shot_id": "P1_S13_004"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S13_005.wav",
+                    "relative_path": "audio\\P1_S13_005.wav",
+                    "size_bytes": 1155852
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S13",
+                "shot_id": "P1_S13_005"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S13_006.wav",
+                    "relative_path": "audio\\P1_S13_006.wav",
+                    "size_bytes": 971690
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S13",
+                "shot_id": "P1_S13_006"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S14_001.wav",
+                    "relative_path": "audio\\P1_S14_001.wav",
+                    "size_bytes": 1384466
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S14",
+                "shot_id": "P1_S14_001"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S14_002.wav",
+                    "relative_path": "audio\\P1_S14_002.wav",
+                    "size_bytes": 1088114
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S14",
+                "shot_id": "P1_S14_002"
+            },
+            {
+                "audio": {
+                    "directory": "audio",
+                    "format": "wav",
+                    "path": "C:\\Users\\deepc\\film-pipeline\\output\\audio\\P1_S14_003.wav",
+                    "relative_path": "audio\\P1_S14_003.wav",
+                    "size_bytes": 1547460
+                },
+                "has_audio": true,
+                "has_clip": false,
+                "has_composite": false,
+                "scene_id": "P1_S14",
+                "shot_id": "P1_S14_003"
+            }
+        ],
+        "total": 89,
+        "with_audio": 89,
+        "with_clip": 25,
+        "with_composite": 25
+    },
+    "message": "ok",
+    "status": "ok"
+}
