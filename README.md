@@ -97,13 +97,13 @@ The dashboard supports two operational modes:
 ### Install & Run (Demo Mode)
 
 ```bash
-git clone https://github.com/deepchand/mole-world-dashboard.git
+git clone https://github.com/aptsalt/mole-world-dashboard.git
 cd mole-world-dashboard
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001). Demo mode loads pre-captured production data automatically.
+Open [http://localhost:3003](http://localhost:3003). Demo mode loads pre-captured production data automatically.
 
 ### Run with Live Pipeline
 
@@ -159,7 +159,7 @@ This project demonstrates end-to-end engineering across ML, systems, and fronten
 6. **Production Dashboard** -- 43+ feature iterations, migrated from 15K-line HTML to Next.js + TypeScript
 7. **Portfolio Deployment** -- Dual-mode architecture for demo (Vercel) + live operation
 
-See the full development story at [`/pitch`](http://localhost:3001/pitch).
+See the full development story at [`/pitch`](http://localhost:3003/pitch).
 
 ---
 
