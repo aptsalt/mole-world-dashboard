@@ -191,7 +191,7 @@ function SlideSection({ slide, isLast }: { slide: PitchSlide; isLast: boolean })
 
       {/* Content */}
       <div className="pb-12 flex-1 min-w-0">
-        <div className="glass p-6 md:p-8 hover:border-white/[0.12] transition-all group">
+        <div className="glass p-6 md:p-8 hover:border-white/[0.12] transition-all group hover-lift">
           {/* Header */}
           <div className="flex items-start gap-4 mb-4">
             <div
@@ -245,7 +245,7 @@ const SKILLS = [
 
 export default function PitchPage() {
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-4xl animate-fade-in">
       {/* Hero */}
       <div className="relative mb-16 overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0c0c18] via-[#111128] to-[#0c0c18] p-8 md:p-12">
         <div className="relative z-10">

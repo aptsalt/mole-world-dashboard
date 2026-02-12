@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useDashboardStore } from "@/lib/store";
 
 interface NavItem {
   href: string;
@@ -39,6 +40,21 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { status, clips } = useDashboardStore();
+
+  const v1Done = status?.v1?.done ?? 0;
+  const v2Done = status?.v2?.done ?? 0;
+  const narDone = status?.audio_narrations ?? 0;
+  const totalShots = status?.total_shots ?? 89;
+  const totalDone = v1Done + v2Done + narDone;
+  const totalAll = totalShots * 3;
+  const progressPct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
+  const scenesComplete = clips.length > 0
+    ? new Set(clips.filter((c) => c.has_clip).map((c) => c.scene_id)).size
+    : 0;
+  const totalScenes = clips.length > 0
+    ? new Set(clips.map((c) => c.scene_id)).size
+    : 14;
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -81,18 +97,28 @@ export function Sidebar() {
                 <Link
                   href={item.href}
                   className={clsx(
-                    "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                    "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     active
                       ? "bg-cyan/[0.08] text-cyan"
                       : "text-muted hover:bg-white/[0.04] hover:text-white"
                   )}
                   title={collapsed ? item.label : undefined}
                 >
-                  {/* Active indicator bar */}
-                  {active && (
-                    <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-cyan" />
-                  )}
-                  <Icon size={18} className="shrink-0" />
+                  {/* Active indicator bar - animated */}
+                  <span
+                    className={clsx(
+                      "absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-r-full bg-cyan transition-all duration-300",
+                      active ? "h-5 opacity-100 indicator-pulse" : "h-0 opacity-0"
+                    )}
+                  />
+                  <Icon
+                    size={18}
+                    className={clsx(
+                      "shrink-0 transition-transform duration-200",
+                      active && "scale-110",
+                      !active && "group-hover:scale-105"
+                    )}
+                  />
                   {!collapsed && (
                     <>
                       <span className="truncate">{item.label}</span>
@@ -122,12 +148,12 @@ export function Sidebar() {
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan to-cyan/60"
-                style={{ width: "35%" }}
+                className="h-full rounded-full bg-gradient-to-r from-cyan to-cyan/60 transition-all duration-1000"
+                style={{ width: `${progressPct}%` }}
               />
             </div>
             <span className="mt-1 block text-[10px] text-muted">
-              12 / 34 scenes complete
+              {scenesComplete} / {totalScenes} scenes with clips
             </span>
           </div>
         )}
