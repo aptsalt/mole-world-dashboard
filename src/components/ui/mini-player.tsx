@@ -15,28 +15,43 @@ export interface MiniPlayerClip {
   audioUrl?: string;
 }
 
-// ─── Cross-component communication via window events ───────────────
-// This bypasses any Turbopack/HMR module deduplication issues.
-// openMiniPlayer dispatches an event, MiniPlayer listens for it.
+// ─── Bulletproof cross-component communication ───────────────
+// Uses a global function reference on window. When MiniPlayer mounts,
+// it registers itself. When openMiniPlayer is called, it invokes the
+// registered function directly. No events, no stores, no modules.
 
-const MINI_PLAYER_OPEN = "mini-player:open";
-const MINI_PLAYER_CLOSE = "mini-player:close";
+interface MiniPlayerGlobal {
+  open: (clip: MiniPlayerClip, playlist: MiniPlayerClip[]) => void;
+  close: () => void;
+}
 
-interface MiniPlayerOpenDetail {
-  clip: MiniPlayerClip;
-  playlist: MiniPlayerClip[];
+declare global {
+  interface Window {
+    __miniPlayer?: MiniPlayerGlobal;
+  }
 }
 
 export function openMiniPlayer(clip: MiniPlayerClip, playlist?: MiniPlayerClip[]) {
-  window.dispatchEvent(
-    new CustomEvent<MiniPlayerOpenDetail>(MINI_PLAYER_OPEN, {
-      detail: { clip, playlist: playlist ?? [clip] },
-    })
-  );
+  const mp = window.__miniPlayer;
+  if (mp) {
+    mp.open(clip, playlist ?? [clip]);
+  } else {
+    // Fallback: try CustomEvent in case the global isn't set yet
+    window.dispatchEvent(
+      new CustomEvent("mini-player:open", {
+        detail: { clip, playlist: playlist ?? [clip] },
+      })
+    );
+  }
 }
 
 export function closeMiniPlayer() {
-  window.dispatchEvent(new CustomEvent(MINI_PLAYER_CLOSE));
+  const mp = window.__miniPlayer;
+  if (mp) {
+    mp.close();
+  } else {
+    window.dispatchEvent(new CustomEvent("mini-player:close"));
+  }
 }
 
 type VideoStatus = "loading" | "ready" | "error" | "playing" | "paused";
@@ -52,23 +67,36 @@ export function MiniPlayer() {
   const [muted, setMuted] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Listen for open/close events from anywhere in the app
+  // Register global function reference AND event listeners as fallback
   useEffect(() => {
-    const handleOpen = (e: Event) => {
-      const { clip: newClip, playlist: newPlaylist } = (e as CustomEvent<MiniPlayerOpenDetail>).detail;
+    const openFn = (newClip: MiniPlayerClip, newPlaylist: MiniPlayerClip[]) => {
       setClip(newClip);
       setPlaylist(newPlaylist);
     };
-    const handleClose = () => {
+    const closeFn = () => {
       setClip(null);
       setPlaylist([]);
     };
 
-    window.addEventListener(MINI_PLAYER_OPEN, handleOpen);
-    window.addEventListener(MINI_PLAYER_CLOSE, handleClose);
+    // Primary: global function reference
+    window.__miniPlayer = { open: openFn, close: closeFn };
+
+    // Fallback: CustomEvent listeners
+    const handleOpen = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.clip) openFn(detail.clip, detail.playlist ?? [detail.clip]);
+    };
+    const handleClose = () => closeFn();
+
+    window.addEventListener("mini-player:open", handleOpen);
+    window.addEventListener("mini-player:close", handleClose);
+
     return () => {
-      window.removeEventListener(MINI_PLAYER_OPEN, handleOpen);
-      window.removeEventListener(MINI_PLAYER_CLOSE, handleClose);
+      if (window.__miniPlayer?.open === openFn) {
+        delete window.__miniPlayer;
+      }
+      window.removeEventListener("mini-player:open", handleOpen);
+      window.removeEventListener("mini-player:close", handleClose);
     };
   }, []);
 
@@ -82,11 +110,15 @@ export function MiniPlayer() {
   }, [clip, playlist]);
 
   const close = useCallback(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
+    try {
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
+    } catch {
+      // ignore cleanup errors
     }
     setClip(null);
     setPlaylist([]);
@@ -109,11 +141,20 @@ export function MiniPlayer() {
     }
 
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {
+      setStatus("error");
+      setErrorMsg("Video element not ready");
+      return;
+    }
 
-    // Set source and load
-    video.src = clip.videoUrl;
-    video.load();
+    try {
+      video.src = clip.videoUrl;
+      video.load();
+    } catch {
+      setStatus("error");
+      setErrorMsg("Failed to load video");
+      return;
+    }
 
     const tryAutoPlay = () => {
       video.muted = true;
@@ -238,7 +279,6 @@ export function MiniPlayer() {
     setMuted(next);
   }, [muted]);
 
-  // Always render the video element (hidden when no clip) so the ref is stable
   const sceneColor = clip ? getSceneColor(clip.sceneId) : "#00d4ff";
   const isPlaying = status === "playing";
   const isLoading = status === "loading";
@@ -258,7 +298,11 @@ export function MiniPlayer() {
 
       {/* Visible player UI */}
       {clip && (
-        <div className="mini-player">
+        <div
+          className="mini-player"
+          role="region"
+          aria-label="Mini player"
+        >
           {/* Progress bar at top of player */}
           <div
             className="absolute top-0 left-0 right-0 h-1 bg-white/[0.06] cursor-pointer group"
