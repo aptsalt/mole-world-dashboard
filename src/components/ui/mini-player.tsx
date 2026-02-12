@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { create } from "zustand";
 import {
   Play, Pause, SkipBack, SkipForward,
   X, Volume2, VolumeX, AlertCircle, Loader2,
@@ -15,41 +16,44 @@ export interface MiniPlayerClip {
   audioUrl?: string;
 }
 
-interface MiniPlayerState {
+// Zustand store — survives HMR, no stale listener issues
+interface MiniPlayerStore {
   clip: MiniPlayerClip | null;
   playlist: MiniPlayerClip[];
+  open: (clip: MiniPlayerClip, playlist?: MiniPlayerClip[]) => void;
+  close: () => void;
+  navigate: (direction: -1 | 1) => void;
 }
 
-// Simple global state for mini player — avoids prop drilling through AppShell
-const listeners = new Set<() => void>();
-let playerState: MiniPlayerState = { clip: null, playlist: [] };
+const useMiniPlayerStore = create<MiniPlayerStore>((set, get) => ({
+  clip: null,
+  playlist: [],
+  open: (clip, playlist) => set({ clip, playlist: playlist ?? [clip] }),
+  close: () => set({ clip: null, playlist: [] }),
+  navigate: (direction) => {
+    const { clip, playlist } = get();
+    if (!clip || playlist.length <= 1) return;
+    const idx = playlist.findIndex((c) => c.shotId === clip.shotId);
+    const next = idx + direction;
+    if (next >= 0 && next < playlist.length) {
+      set({ clip: playlist[next] });
+    }
+  },
+}));
 
+// Public API — importable from anywhere without prop drilling
 export function openMiniPlayer(clip: MiniPlayerClip, playlist?: MiniPlayerClip[]) {
-  playerState = { clip, playlist: playlist ?? [clip] };
-  listeners.forEach((fn) => fn());
+  useMiniPlayerStore.getState().open(clip, playlist);
 }
 
 export function closeMiniPlayer() {
-  playerState = { clip: null, playlist: [] };
-  listeners.forEach((fn) => fn());
-}
-
-function useMiniPlayerState() {
-  const [state, setState] = useState<MiniPlayerState>(playerState);
-
-  useEffect(() => {
-    const listener = () => setState({ ...playerState });
-    listeners.add(listener);
-    return () => { listeners.delete(listener); };
-  }, []);
-
-  return state;
+  useMiniPlayerStore.getState().close();
 }
 
 type VideoStatus = "loading" | "ready" | "error" | "playing" | "paused";
 
 export function MiniPlayer() {
-  const { clip, playlist } = useMiniPlayerState();
+  const { clip, playlist, navigate, close } = useMiniPlayerStore();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<VideoStatus>("loading");
   const [progress, setProgress] = useState(0);
@@ -59,14 +63,15 @@ export function MiniPlayer() {
   const [errorMsg, setErrorMsg] = useState("");
   const prevShotRef = useRef<string | null>(null);
 
-  // Attach video event listeners
+  // Load video source and attach event listeners
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !clip?.videoUrl) return;
 
-    // Update src when clip changes (instead of using key prop)
-    if (video.src !== clip.videoUrl) {
-      video.src = clip.videoUrl;
+    // Compare using URL to handle relative vs absolute
+    const currentSrc = video.getAttribute("src") || "";
+    if (currentSrc !== clip.videoUrl) {
+      video.setAttribute("src", clip.videoUrl);
       video.load();
     }
 
@@ -106,12 +111,8 @@ export function MiniPlayer() {
       }
       setStatus("error");
     };
-    const onWaiting = () => {
-      setStatus("loading");
-    };
-    const onPlaying = () => {
-      setStatus("playing");
-    };
+    const onWaiting = () => setStatus("loading");
+    const onPlaying = () => setStatus("playing");
 
     video.addEventListener("canplay", onCanPlay);
     video.addEventListener("play", onPlay);
@@ -155,7 +156,6 @@ export function MiniPlayer() {
       return;
     }
 
-    // Auto-play when a new clip is loaded (user clicked "Play in Mini Player")
     if (isNewClip) {
       const video = videoRef.current;
       if (!video) return;
@@ -165,16 +165,13 @@ export function MiniPlayer() {
         video.play().then(() => {
           setStatus("playing");
         }).catch(() => {
-          // Autoplay blocked — user needs to click play manually
           setStatus("ready");
         });
       };
 
-      // If video is already loaded enough, play immediately
       if (video.readyState >= 3) {
         tryAutoPlay();
       } else {
-        // Wait for enough data to play
         const onReady = () => {
           video.removeEventListener("canplay", onReady);
           tryAutoPlay();
@@ -210,16 +207,6 @@ export function MiniPlayer() {
     if (!video || !video.duration) return;
     video.currentTime = (pct / 100) * video.duration;
   }, []);
-
-  const navigatePlaylist = useCallback((direction: -1 | 1) => {
-    if (!clip || playlist.length <= 1) return;
-    const currentIdx = playlist.findIndex((c) => c.shotId === clip.shotId);
-    const nextIdx = currentIdx + direction;
-    if (nextIdx >= 0 && nextIdx < playlist.length) {
-      playerState = { clip: playlist[nextIdx], playlist };
-      listeners.forEach((fn) => fn());
-    }
-  }, [clip, playlist]);
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
@@ -264,7 +251,6 @@ export function MiniPlayer() {
             className="relative flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] overflow-hidden"
             style={{ background: `linear-gradient(135deg, ${sceneColor}20, ${sceneColor}08)` }}
           >
-            {/* Always render video element to keep ref stable */}
             <video
               ref={videoRef}
               muted={muted}
@@ -272,19 +258,16 @@ export function MiniPlayer() {
               preload="auto"
               className="h-full w-full object-cover"
             />
-            {/* Loading overlay */}
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                 <Loader2 size={14} className="text-white animate-spin" />
               </div>
             )}
-            {/* Error overlay */}
             {isError && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60">
                 <AlertCircle size={12} className="text-red-400" />
               </div>
             )}
-            {/* Playing pulse indicator */}
             {isPlaying && (
               <div
                 className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full animate-pulse"
@@ -316,7 +299,7 @@ export function MiniPlayer() {
         {/* Controls */}
         <div className="flex items-center gap-1">
           <button
-            onClick={() => navigatePlaylist(-1)}
+            onClick={() => navigate(-1)}
             className="h-8 w-8 flex items-center justify-center rounded-full text-muted hover:text-white transition-colors"
             aria-label="Previous"
           >
@@ -343,7 +326,7 @@ export function MiniPlayer() {
             )}
           </button>
           <button
-            onClick={() => navigatePlaylist(1)}
+            onClick={() => navigate(1)}
             className="h-8 w-8 flex items-center justify-center rounded-full text-muted hover:text-white transition-colors"
             aria-label="Next"
           >
@@ -368,7 +351,7 @@ export function MiniPlayer() {
             {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
           </button>
           <button
-            onClick={() => closeMiniPlayer()}
+            onClick={() => close()}
             className="h-7 w-7 flex items-center justify-center rounded-md text-muted hover:text-white transition-colors"
             aria-label="Close player"
           >
