@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useDashboardStore } from "@/lib/store";
 import type { Clip, Shot } from "@/lib/types";
 import { getSceneColor } from "@/lib/utils";
@@ -12,7 +12,7 @@ import {
   ArrowLeftRight, Play, Pause,
 } from "lucide-react";
 import { ClipComparison } from "@/components/ui/clip-comparison";
-import { openMiniPlayer } from "@/components/ui/mini-player";
+import { useMiniPlayer } from "@/components/ui/mini-player";
 import type { MiniPlayerClip } from "@/components/ui/mini-player";
 import { ClipsSkeleton } from "@/components/ui/skeleton";
 import { getVideoUrl, getAudioUrl } from "@/lib/api";
@@ -77,10 +77,36 @@ function ShotDrawer({
   onCompare: (shotId: string) => void;
   onPlay: (clip: Clip) => void;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
   const currentIndex = clips.findIndex((c) => c.shot_id === clip.shot_id);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < clips.length - 1;
   const sceneColor = getSceneColor(clip.scene_id);
+
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (playing) {
+      video.pause();
+      setPlaying(false);
+    } else {
+      video.play().catch(() => {});
+      setPlaying(true);
+    }
+  }, [playing]);
+
+  // Reset play state when navigating to a different clip
+  useEffect(() => {
+    setPlaying(false);
+  }, [clip.shot_id]);
+
+  // Pause on unmount
+  useEffect(() => {
+    return () => {
+      videoRef.current?.pause();
+    };
+  }, []);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -116,22 +142,25 @@ function ShotDrawer({
         <div className="aspect-video rounded-xl bg-black border border-white/[0.06] flex items-center justify-center relative group/video overflow-hidden">
           {clipVideoUrl(clip) ? (
             <video
+              ref={videoRef}
               src={clipVideoUrl(clip)!}
               muted
+              loop
               playsInline
               preload="metadata"
               className="h-full w-full object-contain"
+              onEnded={() => setPlaying(false)}
             />
           ) : (
             <Film size={32} className="text-white/10" />
           )}
-          {clip.has_clip && (
+          {clip.has_clip && clipVideoUrl(clip) && (
             <button
-              onClick={() => onPlay(clip)}
-              className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/video:opacity-100 transition-opacity"
+              onClick={togglePlay}
+              className={`absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity ${playing ? "opacity-0 hover:opacity-100" : "opacity-0 group-hover/video:opacity-100"}`}
             >
               <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/30 transition-colors">
-                <Play size={20} className="text-white ml-0.5" />
+                {playing ? <Pause size={20} className="text-white" /> : <Play size={20} className="text-white ml-0.5" />}
               </div>
             </button>
           )}
@@ -141,11 +170,15 @@ function ShotDrawer({
         <div className="flex items-center gap-2">
           {clip.has_clip && (
             <button
-              onClick={() => onPlay(clip)}
+              onClick={() => {
+                videoRef.current?.pause();
+                setPlaying(false);
+                onPlay(clip);
+              }}
               className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-cyan/10 border border-cyan/20 py-2 text-xs font-medium text-cyan hover:bg-cyan/15 transition-all"
             >
               <Play size={14} />
-              Play in Mini Player
+              Mini Player
             </button>
           )}
           {clip.clip?.source === "v2" && (
@@ -559,6 +592,7 @@ function BulkActionsBar({ count, onClear }: { count: number; onClear: () => void
 
 export default function ClipsPage() {
   const { clips, storyboard, refreshAll } = useDashboardStore();
+  const miniPlayer = useMiniPlayer();
   const [view, setView] = useState<ViewMode>("grid");
   const [sceneFilter, setSceneFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
@@ -598,7 +632,7 @@ export default function ClipsPage() {
   const filtered = useMemo(() => {
     let result = clips.filter((clip) => {
       if (sceneFilter !== "all" && clip.scene_id !== sceneFilter) return false;
-      if (sourceFilter === "v1" && clip.clip?.source !== "v1") return false;
+      if (sourceFilter === "v1" && clip.clip?.source !== "v1" && !clip.v1_clip) return false;
       if (sourceFilter === "v2" && clip.clip?.source !== "v2") return false;
       if (statusFilter === "has_clip" && !clip.has_clip) return false;
       if (statusFilter === "has_audio" && !clip.has_audio) return false;
@@ -810,7 +844,7 @@ export default function ClipsPage() {
           onCompare={(shotId) => setCompareShotId(shotId)}
           onPlay={(c) => {
             const playlist = filtered.filter((f) => f.has_clip).map(buildMiniPlayerClip);
-            openMiniPlayer(buildMiniPlayerClip(c), playlist);
+            miniPlayer.open(buildMiniPlayerClip(c), playlist);
           }}
         />
       )}

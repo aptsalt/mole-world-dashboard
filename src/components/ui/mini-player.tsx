@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState, useEffect, useCallback, useRef,
+  createContext, useContext,
+} from "react";
 import {
   Play, Pause, SkipBack, SkipForward,
   X, Volume2, VolumeX, AlertCircle, Loader2,
@@ -15,50 +18,53 @@ export interface MiniPlayerClip {
   audioUrl?: string;
 }
 
-// ─── Bulletproof cross-component communication ───────────────
-// Uses a global function reference on window. When MiniPlayer mounts,
-// it registers itself. When openMiniPlayer is called, it invokes the
-// registered function directly. No events, no stores, no modules.
+// ─── React Context for cross-component communication ─────────
+// This replaces all window globals and CustomEvents with proper
+// React state management that works reliably in every browser.
 
-interface MiniPlayerGlobal {
+interface MiniPlayerContextValue {
+  clip: MiniPlayerClip | null;
+  playlist: MiniPlayerClip[];
   open: (clip: MiniPlayerClip, playlist: MiniPlayerClip[]) => void;
   close: () => void;
 }
 
-declare global {
-  interface Window {
-    __miniPlayer?: MiniPlayerGlobal;
-  }
+const MiniPlayerContext = createContext<MiniPlayerContextValue>({
+  clip: null,
+  playlist: [],
+  open: () => {},
+  close: () => {},
+});
+
+export function MiniPlayerProvider({ children }: { children: React.ReactNode }) {
+  const [clip, setClip] = useState<MiniPlayerClip | null>(null);
+  const [playlist, setPlaylist] = useState<MiniPlayerClip[]>([]);
+
+  const open = useCallback((newClip: MiniPlayerClip, newPlaylist: MiniPlayerClip[]) => {
+    setClip(newClip);
+    setPlaylist(newPlaylist);
+  }, []);
+
+  const close = useCallback(() => {
+    setClip(null);
+    setPlaylist([]);
+  }, []);
+
+  return (
+    <MiniPlayerContext.Provider value={{ clip, playlist, open, close }}>
+      {children}
+    </MiniPlayerContext.Provider>
+  );
 }
 
-export function openMiniPlayer(clip: MiniPlayerClip, playlist?: MiniPlayerClip[]) {
-  const mp = window.__miniPlayer;
-  if (mp) {
-    mp.open(clip, playlist ?? [clip]);
-  } else {
-    // Fallback: try CustomEvent in case the global isn't set yet
-    window.dispatchEvent(
-      new CustomEvent("mini-player:open", {
-        detail: { clip, playlist: playlist ?? [clip] },
-      })
-    );
-  }
-}
-
-export function closeMiniPlayer() {
-  const mp = window.__miniPlayer;
-  if (mp) {
-    mp.close();
-  } else {
-    window.dispatchEvent(new CustomEvent("mini-player:close"));
-  }
+export function useMiniPlayer() {
+  return useContext(MiniPlayerContext);
 }
 
 type VideoStatus = "loading" | "ready" | "error" | "playing" | "paused";
 
 export function MiniPlayer() {
-  const [clip, setClip] = useState<MiniPlayerClip | null>(null);
-  const [playlist, setPlaylist] = useState<MiniPlayerClip[]>([]);
+  const { clip, playlist, open, close: contextClose } = useMiniPlayer();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<VideoStatus>("loading");
   const [progress, setProgress] = useState(0);
@@ -67,47 +73,14 @@ export function MiniPlayer() {
   const [muted, setMuted] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Register global function reference AND event listeners as fallback
-  useEffect(() => {
-    const openFn = (newClip: MiniPlayerClip, newPlaylist: MiniPlayerClip[]) => {
-      setClip(newClip);
-      setPlaylist(newPlaylist);
-    };
-    const closeFn = () => {
-      setClip(null);
-      setPlaylist([]);
-    };
-
-    // Primary: global function reference
-    window.__miniPlayer = { open: openFn, close: closeFn };
-
-    // Fallback: CustomEvent listeners
-    const handleOpen = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.clip) openFn(detail.clip, detail.playlist ?? [detail.clip]);
-    };
-    const handleClose = () => closeFn();
-
-    window.addEventListener("mini-player:open", handleOpen);
-    window.addEventListener("mini-player:close", handleClose);
-
-    return () => {
-      if (window.__miniPlayer?.open === openFn) {
-        delete window.__miniPlayer;
-      }
-      window.removeEventListener("mini-player:open", handleOpen);
-      window.removeEventListener("mini-player:close", handleClose);
-    };
-  }, []);
-
   const navigate = useCallback((direction: -1 | 1) => {
     if (!clip || playlist.length <= 1) return;
     const idx = playlist.findIndex((c) => c.shotId === clip.shotId);
     const next = idx + direction;
     if (next >= 0 && next < playlist.length) {
-      setClip(playlist[next]);
+      open(playlist[next], playlist);
     }
-  }, [clip, playlist]);
+  }, [clip, playlist, open]);
 
   const close = useCallback(() => {
     try {
@@ -120,9 +93,8 @@ export function MiniPlayer() {
     } catch {
       // ignore cleanup errors
     }
-    setClip(null);
-    setPlaylist([]);
-  }, []);
+    contextClose();
+  }, [contextClose]);
 
   // Load video and autoplay when clip changes
   useEffect(() => {

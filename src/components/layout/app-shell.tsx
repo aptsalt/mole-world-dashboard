@@ -6,7 +6,7 @@ import { clsx } from "clsx";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { Screensaver } from "@/components/ui/screensaver";
-import { MiniPlayer } from "@/components/ui/mini-player";
+import { MiniPlayer, MiniPlayerProvider } from "@/components/ui/mini-player";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -32,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
+    <MiniPlayerProvider>
     <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
       {mobileOpen && (
@@ -109,5 +110,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Screensaver */}
       <Screensaver />
     </div>
+    </MiniPlayerProvider>
   );
 }
