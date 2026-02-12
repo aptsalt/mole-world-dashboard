@@ -17,16 +17,16 @@ import demoLogs from '../../data/demo-logs.json';
 import demoVoices from '../../data/demo-voices.json';
 
 // GitHub Pages static build sets NEXT_PUBLIC_DEMO_MODE=true
-// Localhost always tries live Flask API first, falls back to demo data
+// Localhost proxies through Next.js API route → Flask (same-origin, no CORS)
 const DEMO_ONLY = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555';
 
 function unwrap<T>(raw: Record<string, unknown>): T {
   return (raw.data ?? raw) as T;
 }
 
 async function fetchLive<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${API_URL}${endpoint}`, { cache: 'no-store' });
+  // Use Next.js API proxy route — same origin, no CORS issues
+  const res = await fetch(`/api/pipeline${endpoint}`, { cache: 'no-store' });
   if (!res.ok) {
     throw new Error(`API ${endpoint} failed: ${res.status} ${res.statusText}`);
   }
@@ -37,11 +37,8 @@ async function fetchLive<T>(endpoint: string): Promise<T> {
 async function fetchWithFallback<T>(
   endpoint: string,
   demoData: Record<string, unknown>,
-  extractClips?: boolean,
 ): Promise<T> {
-  if (DEMO_ONLY) return extractClips
-    ? unwrap<T>({ clips: unwrap<ClipsResponse>(demoData).clips } as unknown as Record<string, unknown>)
-    : unwrap<T>(demoData);
+  if (DEMO_ONLY) return unwrap<T>(demoData);
   try {
     return await fetchLive<T>(endpoint);
   } catch {

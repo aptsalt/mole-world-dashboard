@@ -3,6 +3,7 @@ import { stat, open } from "node:fs/promises";
 import path from "node:path";
 
 const OUTPUT_DIR = "C:\\Users\\deepc\\film-pipeline\\output";
+const VOICE_PROFILES_DIR = "C:\\Users\\deepc\\film-pipeline\\voice_profiles";
 
 const MIME_MAP: Record<string, string> = {
   ".mp4": "video/mp4",
@@ -19,9 +20,14 @@ export async function GET(
   const segments = (await params).path;
   const relativePath = segments.join("/");
 
+  // voice_profiles/* routes to the voice profiles directory
+  const isVoiceProfile = relativePath.startsWith("voice_profiles/");
+  const baseDir = isVoiceProfile ? VOICE_PROFILES_DIR : OUTPUT_DIR;
+  const resolvedRelative = isVoiceProfile ? relativePath.replace("voice_profiles/", "") : relativePath;
+
   // Security: prevent path traversal
-  const filePath = path.resolve(OUTPUT_DIR, relativePath);
-  if (!filePath.startsWith(path.resolve(OUTPUT_DIR))) {
+  const filePath = path.resolve(baseDir, resolvedRelative);
+  if (!filePath.startsWith(path.resolve(baseDir))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

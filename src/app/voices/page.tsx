@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useDashboardStore } from "@/lib/store";
 import { getSceneColor } from "@/lib/utils";
+import { getAudioUrl } from "@/lib/api";
 import {
   Mic, Volume2, CheckCircle2, XCircle, User,
   Search, AudioWaveform, Play, Pause,
@@ -41,10 +42,67 @@ export default function VoicesPage() {
   const [filter, setFilter] = useState<VoiceFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [playingProfile, setPlayingProfile] = useState<string | null>(null);
+  const [playingShot, setPlayingShot] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (!voices) refreshAll();
   }, [voices, refreshAll]);
+
+  // Handle profile voice sample playback
+  const toggleProfileAudio = useCallback((profileKey: string) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (playingProfile === profileKey) {
+      audio.pause();
+      audio.currentTime = 0;
+      setPlayingProfile(null);
+      return;
+    }
+
+    // F5TTS sample URL via media API
+    const sampleUrl = `/api/media/voice_samples/${profileKey}_f5tts.wav`;
+    audio.src = sampleUrl;
+    audio.play().catch(() => {
+      // Try reference audio as fallback
+      audio.src = `/api/media/voice_profiles/${profileKey}/reference.wav`;
+      audio.play().catch(() => {});
+    });
+    setPlayingProfile(profileKey);
+    setPlayingShot(null);
+  }, [playingProfile]);
+
+  // Handle individual shot audio playback
+  const toggleShotAudio = useCallback((shotId: string) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (playingShot === shotId) {
+      audio.pause();
+      audio.currentTime = 0;
+      setPlayingShot(null);
+      return;
+    }
+
+    const audioUrl = getAudioUrl(`audio/${shotId}.wav`);
+    audio.src = audioUrl;
+    audio.play().catch(() => {});
+    setPlayingShot(shotId);
+    setPlayingProfile(null);
+  }, [playingShot]);
+
+  // Handle audio ending
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onEnded = () => {
+      setPlayingProfile(null);
+      setPlayingShot(null);
+    };
+    audio.addEventListener("ended", onEnded);
+    return () => audio.removeEventListener("ended", onEnded);
+  }, []);
 
   const profiles = voices?.profiles ?? [];
   const assignments = voices?.assignments ?? [];
@@ -76,6 +134,9 @@ export default function VoicesPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Shared audio element for playback */}
+      <audio ref={audioRef} className="sr-only" preload="none" />
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -135,7 +196,7 @@ export default function VoicesPage() {
               <div key={profile.key} className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all hover-lift">
                 <div className="flex items-center gap-3 mb-3">
                   <button
-                    onClick={() => setPlayingProfile(isPlaying ? null : profile.key)}
+                    onClick={() => toggleProfileAudio(profile.key)}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all hover:scale-105"
                     style={{ background: `${profile.color}15` }}
                   >
@@ -253,6 +314,7 @@ export default function VoicesPage() {
           {filteredAssignments.map((a) => {
             const profile = profiles.find((p) => p.key === a.voice_actor);
             const sceneColor = getSceneColor(a.scene_id);
+            const isShotPlaying = playingShot === a.shot_id;
             return (
               <div key={a.shot_id} className="flex items-center gap-4 rounded-xl bg-white/[0.02] px-4 py-2.5 hover:bg-white/[0.04] transition-all row-hover">
                 <div className="h-2 w-2 rounded-full shrink-0" style={{ background: sceneColor }} />
@@ -271,11 +333,22 @@ export default function VoicesPage() {
                 )}
                 {a.has_audio ? (
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleShotAudio(a.shot_id)}
+                      className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                      title={isShotPlaying ? "Stop" : "Play audio"}
+                    >
+                      {isShotPlaying ? (
+                        <Pause size={10} className="text-cyan" />
+                      ) : (
+                        <Play size={10} className="text-success ml-px" />
+                      )}
+                    </button>
                     <div className="hidden sm:flex items-end gap-[1px] h-3">
                       {Array.from({ length: 5 }, (_, j) => (
                         <div
                           key={j}
-                          className="w-[2px] rounded-full bg-success/50"
+                          className={`w-[2px] rounded-full ${isShotPlaying ? "bg-cyan/80 waveform-active" : "bg-success/50"}`}
                           style={{ height: `${30 + Math.sin(j * 1.5) * 40 + 30}%` }}
                         />
                       ))}
