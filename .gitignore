@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# automation pipeline (lives in private repo: mole-world-2)
+automation/
+docs/higgisfield-pipeline/
+docs/higgsfield-production/
+docs/STRATEGIC-PLAN.md
+docs/WHATSAPP-PIPELINE-PLAN.md
+data/demo-automation.json
+outcome.md
+.playwright-mcp/
+
+# junk
+nul
+test-results/
+videos-page.png
+*temp_readme*
