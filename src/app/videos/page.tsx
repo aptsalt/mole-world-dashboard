@@ -20,6 +20,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { getVideos } from "@/lib/api";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -95,7 +96,7 @@ function StatsBar({ stats }: { stats: VideoStats }) {
   const totalMB = (stats.totalSizeBytes / (1024 * 1024)).toFixed(1);
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+    <div className="rounded-xl border border-white/[0.10] bg-white/[0.04] p-4">
       <div className="flex flex-wrap items-center gap-6">
         {/* Overall progress */}
         <div className="flex-1 min-w-[200px]">
@@ -275,7 +276,7 @@ function VideoCard({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:border-white/[0.12] hover:bg-white/[0.04]"
+      className="group relative overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.04] transition-all hover:border-white/[0.12] hover:bg-white/[0.04]"
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
@@ -296,12 +297,15 @@ function VideoCard({
         ) : video.heroUrl ? (
           <img
             src={video.heroUrl}
-            alt={video.shotId}
+            alt=""
             className="absolute inset-0 h-full w-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Film size={32} className="text-muted/30" />
+        ) : null}
+        {/* Fallback icon when no hero or image fails */}
+        {!hovering && (
+          <div className="absolute inset-0 flex items-center justify-center -z-0">
+            <Film size={32} className="text-muted/20" />
           </div>
         )}
 
@@ -354,18 +358,17 @@ function VideoRow({
 }) {
   return (
     <div
-      className="flex items-center gap-4 rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3 transition-all hover:border-white/[0.12] hover:bg-white/[0.04] cursor-pointer"
+      className="flex items-center gap-4 rounded-lg border border-white/[0.10] bg-white/[0.04] px-4 py-3 transition-all hover:border-white/[0.12] hover:bg-white/[0.04] cursor-pointer"
       onClick={() => onPlay(video)}
     >
       {/* Thumbnail */}
       <div className="relative h-12 w-20 shrink-0 overflow-hidden rounded-md bg-black/40">
         {video.heroUrl ? (
-          <img src={video.heroUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Film size={16} className="text-muted/30" />
-          </div>
-        )}
+          <img src={video.heroUrl} alt="" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+        ) : null}
+        <div className="absolute inset-0 flex items-center justify-center -z-0">
+          <Film size={16} className="text-muted/30" />
+        </div>
         <div className="absolute inset-0 flex items-center justify-center">
           <Play size={12} className="text-white/70" fill="white" />
         </div>
@@ -522,8 +525,8 @@ function ShotGroup({
   const modelMap = new Map(videos.map((v) => [v.modelSuffix, v]));
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-      <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-2.5">
+    <div className="rounded-xl border border-white/[0.10] bg-white/[0.04] overflow-hidden">
+      <div className="flex items-center gap-3 border-b border-white/[0.10] px-4 py-2.5">
         <span className="text-sm font-semibold text-white">{shotId}</span>
         <span className="text-[11px] text-muted">{sceneName}</span>
         <div className="ml-auto flex gap-1">
@@ -555,6 +558,7 @@ function ShotGroup({
                     src={video.heroUrl}
                     alt=""
                     className="absolute inset-0 h-full w-full object-cover opacity-60"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
                 )}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
@@ -580,7 +584,7 @@ function ShotGroup({
           return (
             <div
               key={m.key}
-              className="relative aspect-video bg-white/[0.02] flex items-center justify-center"
+              className="relative aspect-video bg-white/[0.04] flex items-center justify-center"
             >
               <div className="text-center">
                 <Clock size={16} className="mx-auto text-muted/30 mb-1" />
@@ -614,11 +618,9 @@ export default function VideosPage() {
 
   const fetchVideos = useCallback(async () => {
     try {
-      const res = await fetch("/api/videos", { cache: "no-store" });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const data = await res.json();
-      setVideos(data.videos);
-      setStats(data.stats);
+      const data = await getVideos() as { videos: VideoEntry[]; stats: VideoStats };
+      setVideos(data.videos ?? []);
+      setStats(data.stats ?? null);
       setError(null);
       setLastRefresh(new Date());
     } catch (err) {

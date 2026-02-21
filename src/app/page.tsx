@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useDashboardStore } from "@/lib/store";
 import { formatDuration, getSceneColor } from "@/lib/utils";
-import { getLogs } from "@/lib/api";
+import { getLogs, getWhatsAppJobs } from "@/lib/api";
 import type { RenderStats } from "@/lib/types";
 import Link from "next/link";
 import {
@@ -11,6 +11,8 @@ import {
   Zap, Clock, HardDrive, TrendingUp, Sun, Moon, Sunset,
   Play, FolderOpen, FileText, Search, Activity,
   Gauge, Lightbulb, ArrowUpRight, Flame,
+  Monitor, Image as ImageIcon, Video, BookOpen,
+  CheckCircle2, XCircle, ChevronDown, ChevronUp, Maximize2,
 } from "lucide-react";
 import { QuickNotes } from "@/components/ui/quick-notes";
 import { Confetti } from "@/components/ui/confetti";
@@ -116,8 +118,8 @@ function OverallProgressRing({ pct }: { pct: number }) {
           />
           <defs>
             <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#00d4ff" />
-              <stop offset="100%" stopColor="#0099bb" />
+              <stop offset="0%" stopColor="var(--cyan)" />
+              <stop offset="100%" stopColor="var(--accent)" />
             </linearGradient>
           </defs>
         </svg>
@@ -218,7 +220,7 @@ function GpuStatsWidget() {
       </div>
       <div className="space-y-3">
         {[
-          { label: "VRAM Usage", value: 78, max: "16 GB", color: "#00d4ff" },
+          { label: "VRAM Usage", value: 78, max: "16 GB", color: "var(--cyan)" },
           { label: "GPU Utilization", value: 92, max: "100%", color: "#22c55e" },
           { label: "Temperature", value: 68, max: "90\u00b0C", color: value68Color(68) },
           { label: "Power Draw", value: 85, max: "450W", color: "#f59e0b" },
@@ -292,7 +294,7 @@ function ProductionSummary({ totalRenders, totalHours, avgSeconds, diskMb }: {
   totalRenders: number; totalHours: number; avgSeconds: number; diskMb: number;
 }) {
   const items = [
-    { label: "Total Renders", value: `${totalRenders}`, icon: <Zap size={18} className="text-cyan" />, color: "#00d4ff" },
+    { label: "Total Renders", value: `${totalRenders}`, icon: <Zap size={18} className="text-cyan" />, color: "var(--cyan)" },
     { label: "Render Time", value: `${totalHours.toFixed(1)}h`, icon: <Clock size={18} className="text-amber" />, color: "#ff6b35" },
     { label: "Avg Per Clip", value: formatDuration(avgSeconds), icon: <TrendingUp size={18} className="text-success" />, color: "#22c55e" },
     { label: "Disk Usage", value: `${diskMb.toFixed(1)} MB`, icon: <HardDrive size={18} className="text-violet-400" />, color: "#8b5cf6" },
@@ -481,7 +483,7 @@ function PipelineHealthGauge({ v1Pct, v2Pct, narPct }: { v1Pct: number; v2Pct: n
         <div className="flex-1 space-y-2">
           {[
             { label: "Completion", value: completion, color: "#22c55e" },
-            { label: "Speed", value: speed, color: "#00d4ff" },
+            { label: "Speed", value: speed, color: "var(--cyan)" },
             { label: "Consistency", value: consistency, color: "#8b5cf6" },
           ].map((f) => (
             <div key={f.label}>
@@ -801,10 +803,10 @@ function RenderHeatmap({ stats }: { stats: RenderStats | null }) {
 
   const getColor = (intensity: number): string => {
     if (intensity === 0) return "rgba(255,255,255,0.04)";
-    if (intensity < 0.25) return "rgba(0,212,255,0.15)";
-    if (intensity < 0.5) return "rgba(0,212,255,0.3)";
-    if (intensity < 0.75) return "rgba(0,212,255,0.5)";
-    return "rgba(0,212,255,0.75)";
+    if (intensity < 0.25) return "color-mix(in srgb, var(--cyan) 15%, transparent)";
+    if (intensity < 0.5) return "color-mix(in srgb, var(--cyan) 30%, transparent)";
+    if (intensity < 0.75) return "color-mix(in srgb, var(--cyan) 50%, transparent)";
+    return "color-mix(in srgb, var(--cyan) 75%, transparent)";
   };
 
   return (
@@ -856,6 +858,284 @@ function DashboardSkeleton() {
   );
 }
 
+// ── Higgs Tab Types ──────────────────────────────────
+
+interface HiggsJob {
+  id: string;
+  type: string;
+  description: string;
+  enhancedPrompt: string | null;
+  status: string;
+  outputPaths: string[];
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+type DashboardTab = "local" | "higgs";
+type HiggsFilter = "all" | "image" | "clip" | "lesson" | "news-content";
+
+function mediaUrl(outputPath: string): string {
+  const filename = outputPath.split("/").pop() ?? "";
+  return `/api/whatsapp/media?file=${encodeURIComponent(filename)}`;
+}
+
+function relativeTimeShort(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function HiggsCard({ job, typeColors, typeLabels, expandedJob, onToggle }: {
+  job: HiggsJob;
+  typeColors: Record<string, string>;
+  typeLabels: Record<string, string>;
+  expandedJob: string | null;
+  onToggle: (id: string | null) => void;
+}) {
+  const [hovering, setHovering] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isExpanded = expandedJob === job.id;
+  const hasOutput = job.outputPaths.length > 0;
+  const firstOutput = hasOutput ? job.outputPaths[0] : null;
+  const isVideo = firstOutput?.endsWith(".mp4") ?? false;
+  const color = typeColors[job.type] ?? "#6b7280";
+
+  useEffect(() => {
+    if (!isVideo) return;
+    if (hovering && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    } else if (!hovering && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [hovering, isVideo]);
+
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-xl border bg-white/[0.04] transition-all hover:border-white/[0.12] ${
+        isExpanded ? "border-cyan/30" : "border-white/[0.10]"
+      }`}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      {/* Thumbnail / Preview */}
+      {hasOutput && firstOutput && (
+        <div
+          className="relative aspect-video cursor-pointer bg-black/40"
+          onClick={() => onToggle(isExpanded ? null : job.id)}
+        >
+          {isVideo ? (
+            hovering ? (
+              <video
+                ref={videoRef}
+                src={mediaUrl(firstOutput)}
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Film size={32} className="text-muted/20" />
+              </div>
+            )
+          ) : (
+            <>
+              <img
+                src={mediaUrl(firstOutput)}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center -z-0">
+                <ImageIcon size={32} className="text-muted/20" />
+              </div>
+            </>
+          )}
+
+          {/* Play overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+            <div className="rounded-full bg-white/20 p-2 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+              {isVideo ? (
+                <Play size={20} className="text-white" fill="white" />
+              ) : (
+                <Maximize2 size={18} className="text-white" />
+              )}
+            </div>
+          </div>
+
+          {/* Type badge */}
+          <div
+            className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm"
+            style={{ backgroundColor: color + "30", color }}
+          >
+            {typeLabels[job.type] ?? job.type}
+          </div>
+
+          {/* Video indicator */}
+          {isVideo && (
+            <div className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm flex items-center gap-1">
+              <Play size={8} fill="currentColor" />
+              Video
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="p-3 cursor-pointer" onClick={() => onToggle(isExpanded ? null : job.id)}>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-white line-clamp-1">{job.description}</span>
+        </div>
+        <div className="mt-0.5 text-[11px] text-muted">
+          {relativeTimeShort(job.createdAt)}
+        </div>
+      </div>
+
+      {/* Expanded details */}
+      {isExpanded && (
+        <div className="border-t border-white/[0.08] p-3 space-y-2">
+          {job.enhancedPrompt && (
+            <div>
+              <p className="text-[10px] text-muted uppercase mb-1">Enhanced Prompt</p>
+              <p className="text-xs text-white/60 leading-relaxed">{job.enhancedPrompt}</p>
+            </div>
+          )}
+          {job.outputPaths.length > 1 && (
+            <div className="grid grid-cols-2 gap-1.5 mt-2">
+              {job.outputPaths.map((p, i) => (
+                p.endsWith(".mp4") ? (
+                  <video key={i} src={mediaUrl(p)} className="w-full rounded-lg" controls muted playsInline />
+                ) : (
+                  <img key={i} src={mediaUrl(p)} alt="" className="w-full rounded-lg" loading="lazy" />
+                )
+              ))}
+            </div>
+          )}
+          <p className="text-[9px] text-muted font-mono">{job.id}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HiggsTab() {
+  const [jobs, setJobs] = useState<HiggsJob[]>([]);
+  const [filter, setFilter] = useState<HiggsFilter>("all");
+  const [expandedJob, setExpandedJob] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchJobs = () => {
+      getWhatsAppJobs()
+        .then((data) => setJobs(Array.isArray(data) ? data as HiggsJob[] : []))
+        .catch(() => {});
+    };
+    fetchJobs();
+    const interval = setInterval(fetchJobs, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const completed = useMemo(() => jobs.filter((j) => j.status === "completed"), [jobs]);
+  const filtered = useMemo(() => {
+    if (filter === "all") return completed;
+    return completed.filter((j) => j.type === filter);
+  }, [completed, filter]);
+
+  const stats = useMemo(() => ({
+    total: completed.length,
+    images: completed.filter((j) => j.type === "image").length,
+    clips: completed.filter((j) => j.type === "clip").length,
+    lessons: completed.filter((j) => j.type === "lesson").length,
+    successRate: jobs.length > 0 ? Math.round((completed.length / jobs.length) * 100) : 0,
+  }), [jobs, completed]);
+
+  const TYPE_COLORS: Record<string, string> = {
+    image: "#f59e0b",
+    clip: "#8b5cf6",
+    lesson: "#10b981",
+    "news-content": "#f97316",
+  };
+
+  const TYPE_LABELS: Record<string, string> = {
+    image: "Image",
+    clip: "Clip",
+    lesson: "Lesson",
+    "news-content": "News",
+  };
+
+  const FILTER_OPTIONS: { key: HiggsFilter; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "image", label: "Images" },
+    { key: "clip", label: "Clips" },
+    { key: "lesson", label: "Lessons" },
+    { key: "news-content", label: "News" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {[
+          { label: "Total Generated", value: stats.total, color: "var(--cyan)", icon: Zap },
+          { label: "Images", value: stats.images, color: "#f59e0b", icon: ImageIcon },
+          { label: "Clips", value: stats.clips, color: "#8b5cf6", icon: Video },
+          { label: "Lessons", value: stats.lessons, color: "#22c55e", icon: BookOpen },
+          { label: "Success Rate", value: `${stats.successRate}%`, color: "var(--success)", icon: CheckCircle2 },
+        ].map((s) => (
+          <div key={s.label} className="glass p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}15` }}>
+              <s.icon size={16} style={{ color: s.color }} />
+            </div>
+            <div>
+              <span className="text-lg font-bold text-white">{s.value}</span>
+              <p className="text-[10px] text-muted">{s.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter chips */}
+      <div className="flex gap-2 flex-wrap">
+        {FILTER_OPTIONS.map((opt) => (
+          <button
+            key={opt.key}
+            onClick={() => setFilter(opt.key)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
+              filter === opt.key
+                ? "bg-white/10 text-white border-white/20"
+                : "bg-white/[0.02] text-muted border-white/[0.10] hover:bg-white/[0.05]"
+            }`}
+          >
+            {opt.label}
+            <span className="ml-1.5 text-[10px] opacity-60">
+              {opt.key === "all" ? completed.length : completed.filter((j) => j.type === opt.key).length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Thumbnail grid */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {filtered.map((job) => (
+          <HiggsCard key={job.id} job={job} typeColors={TYPE_COLORS} typeLabels={TYPE_LABELS} expandedJob={expandedJob} onToggle={setExpandedJob} />
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="py-12 text-center text-sm text-muted">
+          No generated content yet
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Page ────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -863,6 +1143,7 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<string[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiShown, setConfettiShown] = useState(false);
+  const [tab, setTab] = useState<DashboardTab>("local");
 
   const handleConfettiDone = useCallback(() => setShowConfetti(false), []);
 
@@ -908,6 +1189,38 @@ export default function DashboardPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Confetti Celebration */}
       <Confetti active={showConfetti} onDone={handleConfettiDone} />
+
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-1 rounded-xl bg-white/[0.04] p-1 w-fit">
+        <button
+          onClick={() => setTab("local")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            tab === "local"
+              ? "bg-white/10 text-white"
+              : "text-muted hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <Monitor size={14} />
+          Local Production
+        </button>
+        <button
+          onClick={() => setTab("higgs")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            tab === "higgs"
+              ? "bg-lime/15 text-lime"
+              : "text-muted hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <Zap size={14} />
+          Higgsfield
+        </button>
+      </div>
+
+      {/* Higgs Tab */}
+      {tab === "higgs" && <HiggsTab />}
+
+      {/* Local Tab */}
+      {tab === "local" && <>
 
       {/* Greeting Banner */}
       <GreetingBanner
@@ -1012,7 +1325,7 @@ export default function DashboardPage() {
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
               <Legend wrapperStyle={{ fontSize: 12, color: "#94a3b8" }} />
               <Bar dataKey="v1" name="V1 Standard" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="v2" name="V2 Enhanced" fill="#00d4ff" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="v2" name="V2 Enhanced" fill="var(--cyan)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1037,7 +1350,7 @@ export default function DashboardPage() {
           count={stats?.v2_file_sizes?.count ?? 0}
           totalMb={stats?.v2_file_sizes?.total_mb ?? 0}
           avgKb={stats?.v2_file_sizes?.avg_kb ?? 0}
-          color="#00d4ff" />
+          color="var(--cyan)" />
         <FileSizeCard label="Audio"
           count={stats?.audio_file_sizes?.count ?? 0}
           totalMb={stats?.audio_file_sizes?.total_mb ?? 0}
@@ -1050,6 +1363,8 @@ export default function DashboardPage() {
         v1Done={v1Done} v2Done={v2Done} narDone={narDone}
         v1Total={v1Total} v2Total={v2Total} narTotal={narTotal}
       />
+
+      </>}
     </div>
   );
 }

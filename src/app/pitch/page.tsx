@@ -26,7 +26,7 @@ const SLIDES: PitchSlide[] = [
     subtitle: "One person. Zero budget. Full animated film.",
     description:
       "What if a solo engineer could build an entire animated short film using AI? The Mole World is a dystopian narrative set in underground tunnels where humans are controlled via neural implants. Protagonists Anaya and Deepak discover each other and spark a rebellion. Chapter 1 covers the opening 2\u20135 minutes.",
-    color: "#00d4ff",
+    color: "var(--cyan)",
     icon: <Lightbulb size={24} />,
     metrics: [
       { label: "Scenes", value: "14" },
@@ -146,7 +146,7 @@ const SLIDES: PitchSlide[] = [
     subtitle: "From concept to production in one sprint",
     description:
       "A complete AI film production pipeline \u2014 from screenplay to rendered clips to narrated audio to editing suite \u2014 built by one person. The system demonstrates end-to-end ML engineering, prompt engineering, infrastructure management, and full-stack development. Ready for chapters 2\u20137.",
-    color: "#00d4ff",
+    color: "var(--cyan)",
     icon: <Rocket size={24} />,
     metrics: [
       { label: "Pipeline", value: "End-to-End" },
@@ -247,7 +247,7 @@ export default function PitchPage() {
   return (
     <div className="mx-auto max-w-4xl animate-fade-in">
       {/* Hero */}
-      <div className="relative mb-16 overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0c0c18] via-[#111128] to-[#0c0c18] p-8 md:p-12">
+      <div className="relative mb-16 overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-bg via-bg-light to-bg p-8 md:p-12">
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-4">
             <Film size={16} className="text-cyan" />

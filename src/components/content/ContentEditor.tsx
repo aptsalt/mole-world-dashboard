@@ -51,7 +51,7 @@ export default function ContentEditor({ post, onSave }: ContentEditorProps) {
   ];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#1a1a2e]/80 overflow-hidden">
+    <div className="rounded-xl border border-white/10 bg-bg-card/80 overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
         <div>
@@ -62,7 +62,7 @@ export default function ContentEditor({ post, onSave }: ContentEditorProps) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#c8ff00]/20 text-[#c8ff00] text-xs font-medium hover:bg-[#c8ff00]/30 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-lime/20 text-lime text-xs font-medium hover:bg-lime/30 transition-colors disabled:opacity-50"
           >
             <Save size={12} />
             {saving ? "Saving..." : "Save"}
@@ -79,7 +79,7 @@ export default function ContentEditor({ post, onSave }: ContentEditorProps) {
             className={clsx(
               "flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors",
               tab === t.key
-                ? "text-[#c8ff00] border-b-2 border-[#c8ff00]"
+                ? "text-lime border-b-2 border-lime"
                 : "text-white/40 hover:text-white/60",
             )}
           >
@@ -130,7 +130,7 @@ export default function ContentEditor({ post, onSave }: ContentEditorProps) {
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={6}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 placeholder-white/30 focus:border-[#c8ff00]/50 focus:outline-none resize-none"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 placeholder-white/30 focus:border-lime/50 focus:outline-none resize-none"
               placeholder="Social media caption..."
             />
             <div className="flex justify-between mt-2 text-[10px] text-white/40">
@@ -148,7 +148,7 @@ export default function ContentEditor({ post, onSave }: ContentEditorProps) {
               value={narration}
               onChange={(e) => setNarration(e.target.value)}
               rows={6}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 placeholder-white/30 focus:border-[#c8ff00]/50 focus:outline-none resize-none"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 placeholder-white/30 focus:border-lime/50 focus:outline-none resize-none"
               placeholder="Video narration script..."
             />
             <p className="text-[10px] text-white/40 mt-2">

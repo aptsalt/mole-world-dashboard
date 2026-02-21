@@ -18,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { getWhatsAppJobs } from "@/lib/api";
 
 // ── Types ──────────────────────────────────────────────────────
 interface WhatsAppJob {
@@ -105,7 +106,7 @@ function PipelineDots({ status }: { status: string }) {
               <div
                 className={clsx(
                   "h-[2px] w-5 rounded-full transition-colors duration-500",
-                  isPast ? "bg-[#25D366]" : isFailed ? "bg-red-400/40" : "bg-gray-600"
+                  isPast ? "bg-[#25D366]" : isFailed ? "bg-red-400/40" : "bg-white/20"
                 )}
               />
             )}
@@ -113,9 +114,9 @@ function PipelineDots({ status }: { status: string }) {
               className={clsx(
                 "flex h-7 w-7 items-center justify-center rounded-full transition-all duration-300",
                 isPast && "bg-[#25D366]/20 text-[#25D366]",
-                isCurrent && "bg-[#c8ff00]/20 text-[#c8ff00] ring-2 ring-[#c8ff00]/40 animate-pulse",
+                isCurrent && "bg-lime/20 text-lime ring-2 ring-lime/40 animate-pulse",
                 isFailed && "bg-red-500/20 text-red-400",
-                !isPast && !isCurrent && !isFailed && "bg-gray-200 text-gray-400"
+                !isPast && !isCurrent && !isFailed && "bg-white/[0.06] text-muted"
               )}
               title={stage.label}
             >
@@ -128,7 +129,7 @@ function PipelineDots({ status }: { status: string }) {
       <div
         className={clsx(
           "h-[2px] w-5 rounded-full transition-colors duration-500",
-          isCompleted ? "bg-[#25D366]" : "bg-gray-300"
+          isCompleted ? "bg-[#25D366]" : "bg-white/20"
         )}
       />
       <div
@@ -136,7 +137,7 @@ function PipelineDots({ status }: { status: string }) {
           "flex h-7 w-7 items-center justify-center rounded-full transition-all duration-300",
           isCompleted && "bg-[#25D366]/20 text-[#25D366]",
           isFailed && "bg-red-500/20 text-red-400",
-          !isCompleted && !isFailed && "bg-gray-200 text-gray-400"
+          !isCompleted && !isFailed && "bg-white/[0.06] text-muted"
         )}
       >
         {isFailed ? <AlertCircle size={13} /> : <CheckCircle2 size={13} />}
@@ -152,11 +153,11 @@ function StatusBadge({ status }: { status: string }) {
     <span
       className={clsx(
         "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-        status === "completed" && "bg-[#25D366]/15 text-[#1a9e4a]",
-        status === "failed" && "bg-red-100 text-red-600",
-        status === "pending" && "bg-gray-100 text-gray-500",
+        status === "completed" && "bg-[#25D366]/15 text-[#25D366]",
+        status === "failed" && "bg-red-500/15 text-red-400",
+        status === "pending" && "bg-white/[0.06] text-muted",
         (status === "building_prompt" || status === "generating_image" || status === "generating_video" || status === "delivering") &&
-          "bg-[#c8ff00]/15 text-[#7a9900]"
+          "bg-lime/15 text-lime"
       )}
     >
       {(status === "building_prompt" || status === "generating_image" || status === "generating_video" || status === "delivering") && (
@@ -175,20 +176,20 @@ function JobCard({ job }: { job: WhatsAppJob }) {
     <div
       className={clsx(
         "relative overflow-hidden rounded-2xl border transition-all duration-300",
-        "bg-[#1a1a2e] shadow-xl",
+        "bg-white/[0.04] shadow-xl",
         job.status === "failed"
           ? "border-red-500/30"
           : (job.status === "building_prompt" || job.status === "generating_image" || job.status === "generating_video" || job.status === "delivering")
-            ? "border-[#c8ff00]/30"
+            ? "border-lime/30"
             : job.status === "completed"
               ? "border-[#25D366]/20 hover:border-[#25D366]/40"
-              : "border-gray-700/50"
+              : "border-white/[0.08]"
       )}
     >
       {/* Progress shimmer for in-progress jobs */}
       {["building_prompt", "generating_image", "generating_video", "delivering"].includes(job.status) && (
         <div className="absolute inset-x-0 top-0 h-[2px] overflow-hidden">
-          <div className="h-full w-full bg-gradient-to-r from-transparent via-[#c8ff00]/80 to-transparent animate-[shimmer_2s_infinite]" />
+          <div className="h-full w-full bg-gradient-to-r from-transparent via-lime/80 to-transparent animate-[shimmer_2s_infinite]" />
         </div>
       )}
 
@@ -208,7 +209,7 @@ function JobCard({ job }: { job: WhatsAppJob }) {
             </span>
             <StatusBadge status={job.status} />
           </div>
-          <span className="text-[11px] text-gray-400 font-medium">{relativeTime(job.createdAt)}</span>
+          <span className="text-[11px] text-muted font-medium">{relativeTime(job.createdAt)}</span>
         </div>
 
         {/* Pipeline dots */}
@@ -217,7 +218,7 @@ function JobCard({ job }: { job: WhatsAppJob }) {
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-100 leading-relaxed mb-3 font-medium">
+        <p className="text-sm text-white leading-relaxed mb-3 font-medium">
           &quot;{job.description}&quot;
         </p>
 
@@ -226,14 +227,14 @@ function JobCard({ job }: { job: WhatsAppJob }) {
           <div className="mb-3">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-[#c8ff00] transition-colors font-medium"
+              className="flex items-center gap-1.5 text-[11px] text-muted hover:text-lime transition-colors font-medium"
             >
-              <Sparkles size={10} className="text-[#c8ff00]/70" />
+              <Sparkles size={10} className="text-lime/70" />
               {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               Enhanced prompt
             </button>
             {expanded && (
-              <p className="mt-2 text-xs text-gray-400 leading-relaxed bg-black/30 rounded-xl p-3.5 border border-gray-700/40">
+              <p className="mt-2 text-xs text-muted leading-relaxed bg-black/30 rounded-xl p-3.5 border border-white/[0.08]">
                 {job.enhancedPrompt}
               </p>
             )}
@@ -250,7 +251,7 @@ function JobCard({ job }: { job: WhatsAppJob }) {
                   <video
                     key={p}
                     src={url}
-                    className="h-44 w-auto rounded-xl border border-gray-700/50 object-cover shadow-md"
+                    className="h-44 w-auto rounded-xl border border-white/[0.10] object-cover shadow-md"
                     controls
                     muted
                     preload="metadata"
@@ -262,7 +263,7 @@ function JobCard({ job }: { job: WhatsAppJob }) {
                   key={p}
                   src={url}
                   alt={job.description}
-                  className="h-44 w-auto rounded-xl border border-gray-700/50 object-cover shadow-md hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer"
+                  className="h-44 w-auto rounded-xl border border-white/[0.10] object-cover shadow-md hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer"
                   loading="lazy"
                   onClick={() => window.open(url, "_blank")}
                 />
@@ -280,7 +281,7 @@ function JobCard({ job }: { job: WhatsAppJob }) {
         )}
 
         {/* Footer: timestamps + duration */}
-        <div className="flex items-center justify-between text-[10px] text-gray-500 pt-3 border-t border-gray-700/30">
+        <div className="flex items-center justify-between text-[10px] text-muted pt-3 border-t border-white/[0.08]">
           <span suppressHydrationWarning>{new Date(job.createdAt).toLocaleTimeString()}</span>
           <div className="flex items-center gap-3">
             {job.completedAt && (
@@ -289,7 +290,7 @@ function JobCard({ job }: { job: WhatsAppJob }) {
                 {duration(job.createdAt, job.completedAt)}
               </span>
             )}
-            <span className="font-mono text-[9px] text-gray-600">{job.id.slice(0, 16)}</span>
+            <span className="font-mono text-[9px] text-white/30">{job.id.slice(0, 16)}</span>
           </div>
         </div>
       </div>
@@ -307,10 +308,10 @@ function StatsBar({ jobs }: { jobs: WhatsAppJob[] }) {
   ).length;
 
   const stats = [
-    { label: "Total", value: total, color: "text-gray-700", bg: "bg-white", border: "border-gray-200", icon: Zap, iconColor: "text-gray-200" },
-    { label: "Completed", value: completed, color: "text-[#25D366]", bg: "bg-[#25D366]/5", border: "border-[#25D366]/20", icon: CheckCircle2, iconColor: "text-[#25D366]/15" },
-    { label: "In Progress", value: inProgress, color: "text-[#9ab300]", bg: "bg-[#c8ff00]/5", border: "border-[#c8ff00]/20", icon: Loader2, iconColor: "text-[#c8ff00]/15" },
-    { label: "Failed", value: failed, color: "text-red-500", bg: "bg-red-50", border: "border-red-200", icon: AlertCircle, iconColor: "text-red-100" },
+    { label: "Total", value: total, color: "text-white", bg: "bg-white/[0.06]", border: "border-white/[0.10]", icon: Zap, iconColor: "text-white/10" },
+    { label: "Completed", value: completed, color: "text-[#25D366]", bg: "bg-[#25D366]/10", border: "border-[#25D366]/20", icon: CheckCircle2, iconColor: "text-[#25D366]/15" },
+    { label: "In Progress", value: inProgress, color: "text-lime", bg: "bg-lime/10", border: "border-lime/20", icon: Loader2, iconColor: "text-lime/15" },
+    { label: "Failed", value: failed, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", icon: AlertCircle, iconColor: "text-red-500/15" },
   ];
 
   return (
@@ -326,7 +327,7 @@ function StatsBar({ jobs }: { jobs: WhatsAppJob[] }) {
         >
           <s.icon size={44} className={clsx("absolute -right-2 -top-2", s.iconColor)} />
           <div className={clsx("text-3xl font-bold tabular-nums relative", s.color)}>{s.value}</div>
-          <div className="text-[10px] text-gray-400 uppercase tracking-wider mt-1 font-semibold relative">{s.label}</div>
+          <div className="text-[10px] text-muted uppercase tracking-wider mt-1 font-semibold relative">{s.label}</div>
         </div>
       ))}
     </div>
@@ -349,14 +350,14 @@ function QueueBar({ jobs }: { jobs: WhatsAppJob[] }) {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">
+        <span className="text-[10px] uppercase tracking-wider font-semibold text-muted">
           Queue ({queued.length})
         </span>
         <div className="flex items-center gap-3 ml-auto">
-          <span className="flex items-center gap-1 text-[9px] text-gray-400">
+          <span className="flex items-center gap-1 text-[9px] text-muted">
             <span className="inline-block h-2 w-2 rounded-full bg-amber-400" /> Image
           </span>
-          <span className="flex items-center gap-1 text-[9px] text-gray-400">
+          <span className="flex items-center gap-1 text-[9px] text-muted">
             <span className="inline-block h-2 w-2 rounded-full bg-violet-400" /> Clip
           </span>
         </div>
@@ -393,7 +394,7 @@ function QueueBar({ jobs }: { jobs: WhatsAppJob[] }) {
               {/* Hover tooltip */}
               {hoveredId === job.id && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
-                  <div className="bg-[#1a1a2e] text-white rounded-xl px-3.5 py-2.5 text-[11px] shadow-xl border border-gray-700/50 whitespace-nowrap min-w-[180px]">
+                  <div className="bg-bg-card text-white rounded-xl px-3.5 py-2.5 text-[11px] shadow-xl border border-white/[0.10] whitespace-nowrap min-w-[180px]">
                     <div className="flex items-center gap-2 mb-1.5">
                       <span className={clsx(
                         "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
@@ -404,19 +405,19 @@ function QueueBar({ jobs }: { jobs: WhatsAppJob[] }) {
                       </span>
                       <span className={clsx(
                         "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase",
-                        active && "bg-[#c8ff00]/20 text-[#c8ff00]",
-                        pending && "bg-gray-600 text-gray-300"
+                        active && "bg-lime/20 text-lime",
+                        pending && "bg-white/[0.08] text-muted"
                       )}>
                         {job.status.replace(/_/g, " ")}
                       </span>
                     </div>
-                    <p className="text-gray-200 font-medium leading-snug max-w-[220px] truncate">
+                    <p className="text-white/80 font-medium leading-snug max-w-[220px] truncate">
                       {job.description}
                     </p>
-                    <div className="mt-1.5 text-[9px] text-gray-500" suppressHydrationWarning>
+                    <div className="mt-1.5 text-[9px] text-muted" suppressHydrationWarning>
                       {relativeTime(job.createdAt)}
                     </div>
-                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-[#1a1a2e] border-r border-b border-gray-700/50 rotate-45" />
+                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-bg-card border-r border-b border-white/[0.10] rotate-45" />
                   </div>
                 </div>
               )}
@@ -436,11 +437,8 @@ export default function WhatsAppPage() {
 
   const fetchJobs = useCallback(async () => {
     try {
-      const res = await fetch("/api/whatsapp/jobs");
-      if (res.ok) {
-        const data = await res.json();
-        setJobs(data);
-      }
+      const data = await getWhatsAppJobs() as WhatsAppJob[];
+      setJobs(Array.isArray(data) ? data : []);
     } catch {
       // Silently retry on next poll
     } finally {
@@ -458,7 +456,6 @@ export default function WhatsAppPage() {
   return (
     <div
       className="min-h-screen p-6 animate-[fadeIn_0.3s_ease-out]"
-      style={{ background: "linear-gradient(135deg, #f0f4f0 0%, #e8f5e9 30%, #f5f5f5 70%, #eef2ee 100%)" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -467,17 +464,17 @@ export default function WhatsAppPage() {
             <MessageSquare size={22} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800 tracking-tight">WhatsApp Pipeline</h1>
-            <p className="text-xs text-gray-400 font-medium mt-0.5">Real-time generation tracker</p>
+            <h1 className="text-xl font-bold text-white tracking-tight">WhatsApp Pipeline</h1>
+            <p className="text-xs text-muted font-medium mt-0.5">Real-time generation tracker</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-gray-400 font-medium">
+          <span className="text-[11px] text-muted font-medium">
             {lastRefresh && `Updated ${lastRefresh}`}
           </span>
           <button
             onClick={fetchJobs}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-400 hover:text-[#25D366] hover:shadow-md border border-gray-200 transition-all shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-muted hover:text-[#25D366] hover:bg-white/[0.10] border border-white/[0.10] transition-all"
             title="Refresh now"
           >
             <RefreshCw size={14} />
@@ -499,10 +496,10 @@ export default function WhatsAppPage() {
           <Loader2 size={28} className="text-[#25D366] animate-spin" />
         </div>
       ) : jobs.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-16 text-center shadow-sm">
-          <MessageSquare size={36} className="mx-auto text-gray-300 mb-4" />
-          <p className="text-sm text-gray-500 font-medium">No WhatsApp jobs yet</p>
-          <p className="text-xs text-gray-400 mt-2">
+        <div className="rounded-2xl border border-white/[0.10] bg-white/[0.04] p-16 text-center">
+          <MessageSquare size={36} className="mx-auto text-muted/40 mb-4" />
+          <p className="text-sm text-muted font-medium">No WhatsApp jobs yet</p>
+          <p className="text-xs text-muted/60 mt-2">
             Send &quot;molt generate [description]&quot; in the Higgs group
           </p>
         </div>

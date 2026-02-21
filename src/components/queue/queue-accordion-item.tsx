@@ -113,7 +113,7 @@ export function QueueAccordionItem({
   const promptPreview = item.prompt.slice(0, 60) + (item.prompt.length > 60 ? "..." : "");
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] transition-colors hover:border-white/[0.1]">
+    <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] transition-colors hover:border-white/[0.14]">
       {/* Collapsed header */}
       <button
         onClick={onToggle}

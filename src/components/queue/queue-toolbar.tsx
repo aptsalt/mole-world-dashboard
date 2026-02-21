@@ -41,7 +41,7 @@ export function QueueToolbar({
   const failed = items.filter((i) => i.status === "failed").length;
 
   return (
-    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.06] bg-[#0c0c18]/90 px-4 py-3 backdrop-blur-md">
+    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.08] bg-[#101020]/90 px-4 py-3 backdrop-blur-md">
       {/* Stats */}
       <div className="flex items-center gap-3 text-xs">
         <span className="font-mono text-white">{total} shots</span>

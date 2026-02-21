@@ -41,7 +41,7 @@ export function Tooltip({ content, children, side = "top", delay = 400 }: Toolti
           className={`absolute ${positionClass} z-50 pointer-events-none animate-fade-in`}
           role="tooltip"
         >
-          <div className="whitespace-nowrap rounded-md bg-[#1a1a2e] border border-white/[0.12] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg">
+          <div className="whitespace-nowrap rounded-md bg-bg-card border border-white/[0.12] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg">
             {content}
           </div>
         </div>

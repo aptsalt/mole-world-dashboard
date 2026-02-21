@@ -251,7 +251,7 @@ export function MiniPlayer() {
     setMuted(next);
   }, [muted]);
 
-  const sceneColor = clip ? getSceneColor(clip.sceneId) : "#00d4ff";
+  const sceneColor = clip ? getSceneColor(clip.sceneId) : "var(--cyan)";
   const isPlaying = status === "playing";
   const isLoading = status === "loading";
   const isError = status === "error";

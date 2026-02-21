@@ -1,0 +1,72 @@
+{
+  "digest": {
+    "id": "digest_2026-02-20",
+    "date": "2026-02-20",
+    "stories": [
+      {
+        "id": "story_demo_1",
+        "title": "Phil Spencer is exiting Microsoft as AI executive takes over Xbox",
+        "url": "https://www.neowin.net/news/phil-spencer-is-exiting-microsoft-as-ai-executive-takes-over-xbox/",
+        "source": "Hacker News",
+        "summary": "Phil Spencer is leaving Microsoft as an AI executive takes over Xbox leadership.",
+        "visualScore": 8,
+        "shareabilityScore": 9,
+        "rank": 1,
+        "contentStatus": "ready",
+        "contentPostId": "post_demo_1"
+      },
+      {
+        "id": "story_demo_2",
+        "title": "New Jersey Residents Defeat AI Data Center Plan",
+        "url": "https://www.commondreams.org/news/new-brunswick-ai-data-center",
+        "source": "Hacker News",
+        "summary": "New Jersey residents defeated an AI data center project through a local vote.",
+        "visualScore": 7,
+        "shareabilityScore": 8,
+        "rank": 2,
+        "contentStatus": "ready",
+        "contentPostId": "post_demo_2"
+      },
+      {
+        "id": "story_demo_3",
+        "title": "AI Becomes the Tone Police for White-Collar Workers",
+        "url": "https://www.bloomberg.com/news/articles/2026-01-21/white-collar-workers-use-ai",
+        "source": "Hacker News",
+        "summary": "AI tools now analyze tone in meetings, emails, and chats for white-collar workers.",
+        "visualScore": 7,
+        "shareabilityScore": 8,
+        "rank": 3,
+        "contentStatus": "ready",
+        "contentPostId": "post_demo_3"
+      },
+      {
+        "id": "story_demo_4",
+        "title": "AgentCheck – AI Bot Posture Leaderboard",
+        "url": "https://www.agentcheck.com",
+        "source": "Hacker News",
+        "summary": "A leaderboard ranking AI bots by their posture using robots.txt and llms.txt files.",
+        "visualScore": 6,
+        "shareabilityScore": 7,
+        "rank": 4,
+        "contentStatus": "ready",
+        "contentPostId": "post_demo_4"
+      },
+      {
+        "id": "story_demo_5",
+        "title": "Delegate – AI Engineering Manager for Async Multitasking",
+        "url": "https://github.com/nikhilgarg28/delegate",
+        "source": "Hacker News",
+        "summary": "An AI engineering manager tool that automates tasks for async multitasking.",
+        "visualScore": 7,
+        "shareabilityScore": 7,
+        "rank": 5,
+        "contentStatus": "pending",
+        "contentPostId": null
+      }
+    ],
+    "status": "selected",
+    "fetchedAt": "2026-02-20T22:33:24.194Z",
+    "sentAt": "2026-02-20T22:33:27.274Z",
+    "selectedStories": [1, 2, 3, 4]
+  }
+}

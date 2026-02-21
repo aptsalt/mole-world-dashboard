@@ -358,7 +358,7 @@ function CinemaModal({
           </div>
 
           {/* Info bar */}
-          <div className="flex items-center justify-between px-6 py-4 bg-[#0d0d18] border-t border-white/[0.06]">
+          <div className="flex items-center justify-between px-6 py-4 bg-bg-light border-t border-white/[0.06]">
             <div className="flex items-center gap-4">
               <div>
                 <p className="text-sm font-semibold text-white">{clip.shot_id}</p>
@@ -400,7 +400,7 @@ function CinemaModal({
               style={{
                 flex: 1,
                 background: i === currentIndex
-                  ? "#00d4ff"
+                  ? "var(--cyan)"
                   : c.has_clip
                     ? getSceneColor(c.scene_id)
                     : "rgba(255,255,255,0.06)",
@@ -424,38 +424,92 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 }
 
 function ClipCard({ clip, onClick, onCinema, preferV1 = false }: { clip: Clip; onClick: () => void; onCinema: () => void; preferV1?: boolean }) {
+  const [hovering, setHovering] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const sceneColor = getSceneColor(clip.scene_id);
   const videoUrl = clipVideoUrl(clip, preferV1);
   const source = clipDisplaySource(clip, preferV1);
+  const displayClip = preferV1 && clip.v1_clip ? clip.v1_clip : clip.clip;
+  const sourceColor = source === "v2" ? "#ff6b35" : "#3b82f6";
+
+  useEffect(() => {
+    if (hovering && videoRef.current && videoUrl) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    } else if (!hovering && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [hovering, videoUrl]);
+
   return (
-    <div className="clip-card glass p-4 group" onClick={onClick}>
-      {/* Thumbnail */}
-      <div className="relative aspect-video rounded-lg bg-black mb-3 overflow-hidden flex items-center justify-center">
+    <div
+      className="group relative overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.04] transition-all hover:border-white/[0.12]"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      {/* Thumbnail / Preview */}
+      <div
+        className="relative aspect-video cursor-pointer bg-black/40"
+        onClick={onClick}
+      >
         {videoUrl ? (
-          <video
-            src={videoUrl}
-            muted
-            playsInline
-            preload="metadata"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <Film size={24} className="text-white/10" />
+          hovering ? (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <video
+              src={videoUrl}
+              muted
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )
+        ) : null}
+        {/* Fallback icon */}
+        {!videoUrl && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Film size={32} className="text-muted/20" />
+          </div>
         )}
-        {clip.has_clip && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        )}
-        <div className="absolute top-2 right-2 flex gap-1">
-          {source && (
-            <span className={`badge ${source === "v2" ? "badge-v2" : "badge-v1"}`}>
-              {source === "v2" ? "V2" : "V1"}
-            </span>
-          )}
+
+        {/* Play overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+          <div className="rounded-full bg-white/20 p-2 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+            <Play size={20} className="text-white" fill="white" />
+          </div>
         </div>
+
+        {/* Source badge (V1/V2) */}
+        {source && (
+          <div
+            className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm"
+            style={{
+              backgroundColor: sourceColor + "30",
+              color: sourceColor,
+            }}
+          >
+            {source === "v2" ? "V2 Enhanced" : "V1 Standard"}
+          </div>
+        )}
+
+        {/* Size badge */}
+        {displayClip && (
+          <div className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">
+            {displayClip.size_kb.toFixed(0)} KB
+          </div>
+        )}
+
         {/* Cinema mode button */}
         <button
           onClick={(e) => { e.stopPropagation(); onCinema(); }}
-          className="absolute bottom-2 right-2 h-7 w-7 rounded-md bg-black/60 border border-white/10 flex items-center justify-center text-white/40 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-black/80 transition-all"
+          className="absolute top-2 right-2 h-7 w-7 rounded-md bg-black/50 border border-white/10 flex items-center justify-center text-white/40 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-black/70 transition-all backdrop-blur-sm"
           title="Cinema mode"
         >
           <Maximize2 size={12} />
@@ -463,26 +517,22 @@ function ClipCard({ clip, onClick, onCinema, preferV1 = false }: { clip: Clip; o
       </div>
 
       {/* Info */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="p-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full" style={{ background: sceneColor }} />
-            <span className="text-sm font-semibold text-white">{clip.shot_id}</span>
+            <div className="h-2.5 w-2.5 rounded-full" style={{ background: sceneColor }} />
+            <span className="text-sm font-medium text-white">{clip.shot_id}</span>
           </div>
-          <p className="text-xs text-muted mt-1">{clip.scene_id}</p>
+          <div className="flex items-center gap-1.5">
+            <Film size={12} className={clip.has_clip ? "text-success" : "text-white/10"} />
+            <Mic size={12} className={clip.has_audio ? "text-success" : "text-white/10"} />
+            <Layers size={12} className={clip.has_composite ? "text-success" : "text-white/10"} />
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Film size={12} className={clip.has_clip ? "text-success" : "text-white/10"} />
-          <Mic size={12} className={clip.has_audio ? "text-success" : "text-white/10"} />
-          <Layers size={12} className={clip.has_composite ? "text-success" : "text-white/10"} />
+        <div className="mt-0.5 text-[11px] text-muted truncate">
+          {clip.scene_id}
         </div>
       </div>
-
-      {clip.clip && (
-        <div className="mt-2 text-[10px] text-muted font-mono truncate">
-          {clip.clip.size_kb.toFixed(0)} KB
-        </div>
-      )}
     </div>
   );
 }
@@ -535,7 +585,7 @@ function ClipMosaicItem({ clip, selected, onSelect, onClick, preferV1 = false }:
           : "rgba(255,255,255,0.02)",
         borderWidth: 1,
         borderStyle: "solid",
-        borderColor: selected ? "rgba(0,212,255,0.6)" : "rgba(255,255,255,0.06)",
+        borderColor: selected ? "color-mix(in srgb, var(--cyan) 60%, transparent)" : "rgba(255,255,255,0.06)",
       }}
       onClick={onClick}
     >

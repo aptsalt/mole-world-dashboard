@@ -182,7 +182,7 @@ export default function LogsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex rounded-lg bg-white/[0.04] border border-white/[0.06] p-0.5">
+        <div className="flex rounded-lg bg-white/[0.04] border border-white/[0.08] p-0.5">
           {(["all", "active", "exists", "missing"] as LogFilter[]).map((f) => (
             <button
               key={f}

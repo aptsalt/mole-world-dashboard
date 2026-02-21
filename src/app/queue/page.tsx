@@ -6,6 +6,7 @@ import type { QueueEditorItem, ParsedMdShot, CameraConfig } from "@/lib/types";
 import { QueueToolbar } from "@/components/queue/queue-toolbar";
 import { QueueAccordionItem } from "@/components/queue/queue-accordion-item";
 import { MdImportPanel } from "@/components/queue/md-import-panel";
+import { getQueueItems } from "@/lib/api";
 
 const DEFAULT_CAMERA: CameraConfig = {
   sensor: "ARRI Alexa 35",
@@ -60,8 +61,7 @@ export default function QueuePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/queue");
-        const data = await res.json();
+        const data = await getQueueItems();
         if (Array.isArray(data)) {
           const normalized = data.map((item: Record<string, unknown>): QueueEditorItem => ({
             shotId: (item.shotId as string) || "",
@@ -311,7 +311,7 @@ export default function QueuePage() {
 
       {/* Dirty state indicator */}
       {isDirty && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-amber/20 bg-[#0c0c18]/95 px-4 py-3 text-xs text-amber shadow-lg backdrop-blur-md">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-amber/20 bg-[#101020]/95 px-4 py-3 text-xs text-amber shadow-lg backdrop-blur-md">
           <span className="h-2 w-2 rounded-full bg-amber animate-pulse" />
           Unsaved changes
           <button

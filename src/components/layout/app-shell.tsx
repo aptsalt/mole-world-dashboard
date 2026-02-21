@@ -5,6 +5,7 @@ import { Menu, X, ArrowUp } from "lucide-react";
 import { clsx } from "clsx";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import { ThemeProvider } from "./theme-provider";
 import { Screensaver } from "@/components/ui/screensaver";
 import { MiniPlayer, MiniPlayerProvider } from "@/components/ui/mini-player";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
@@ -32,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
+    <ThemeProvider>
     <MiniPlayerProvider>
     <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
@@ -111,5 +113,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Screensaver />
     </div>
     </MiniPlayerProvider>
+    </ThemeProvider>
   );
 }

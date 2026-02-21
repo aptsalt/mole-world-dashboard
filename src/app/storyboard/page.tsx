@@ -257,7 +257,7 @@ export default function StoryboardPage() {
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Object.entries(characters).map(([name, char]) => (
-              <div key={name} className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all hover-lift">
+              <div key={name} className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-4 hover:bg-white/[0.05] hover:border-white/[0.14] transition-all hover-lift">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan/10">
                     <Users size={12} className="text-cyan" />

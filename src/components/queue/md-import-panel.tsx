@@ -45,7 +45,7 @@ export function MdImportPanel({ onImport }: MdImportPanelProps) {
   };
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02]">
+    <div className="rounded-xl border border-white/[0.08] bg-white/[0.03]">
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.02]"

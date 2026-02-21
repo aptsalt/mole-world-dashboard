@@ -604,7 +604,7 @@ export default function ComposePage() {
       {/* ── Compose Settings Panel (slide-over) ──────────── */}
       {showComposePanel && (
         <div className="fixed inset-0 z-[200]" onClick={() => setShowComposePanel(false)}>
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-[#0d0d18] border-l border-white/8 p-5 space-y-5 overflow-y-auto animate-slide-in"
+          <div className="absolute right-0 top-0 bottom-0 w-80 bg-bg-light border-l border-white/8 p-5 space-y-5 overflow-y-auto animate-slide-in"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -666,7 +666,7 @@ export default function ComposePage() {
       <div className="flex-1 flex min-h-0">
 
         {/* ── Media Pool (left) ──────────────────────────── */}
-        <div className="w-64 xl:w-72 border-r border-white/8 flex flex-col bg-[#0d0d18]/50 shrink-0">
+        <div className="w-64 xl:w-72 border-r border-white/8 flex flex-col bg-bg-light/50 shrink-0">
           {/* Media Pool Header */}
           <div className="px-3 py-2 border-b border-white/8 flex items-center gap-2">
             <LayoutGrid size={12} className="text-cyan" />
@@ -784,7 +784,7 @@ export default function ComposePage() {
         {/* ── Source Monitor (center) ────────────────────── */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Monitor header */}
-          <div className="px-4 py-1.5 border-b border-white/8 flex items-center gap-3 bg-[#0a0a14]/60">
+          <div className="px-4 py-1.5 border-b border-white/8 flex items-center gap-3 bg-bg/60">
             <div className="flex items-center gap-1.5">
               <Eye size={11} className="text-cyan" />
               <span className="text-[11px] font-semibold text-white">Source Monitor</span>
@@ -815,7 +815,7 @@ export default function ComposePage() {
           </div>
 
           {/* Transport controls */}
-          <div className="px-4 py-1.5 border-t border-white/8 bg-[#0a0a14]/60 flex items-center gap-2">
+          <div className="px-4 py-1.5 border-t border-white/8 bg-bg/60 flex items-center gap-2">
             {/* Progress bar */}
             <div className="flex-1 h-1 bg-white/8 rounded-full cursor-pointer relative group"
               onClick={(e) => {
@@ -845,7 +845,7 @@ export default function ComposePage() {
         </div>
 
         {/* ── Inspector (right) ──────────────────────────── */}
-        <div className="w-60 xl:w-64 border-l border-white/8 flex flex-col bg-[#0d0d18]/50 shrink-0">
+        <div className="w-60 xl:w-64 border-l border-white/8 flex flex-col bg-bg-light/50 shrink-0">
           {/* Tab bar */}
           <div className="flex border-b border-white/8">
             <button onClick={() => setRightPanel("inspector")}
@@ -938,7 +938,7 @@ export default function ComposePage() {
       <div className="border-t border-white/10 flex flex-col shrink-0" style={{ flex: "0 0 36%" }}>
 
         {/* Timeline toolbar */}
-        <div className="px-3 py-1.5 border-b border-white/8 flex items-center gap-2 bg-[#0a0a14]/80">
+        <div className="px-3 py-1.5 border-b border-white/8 flex items-center gap-2 bg-bg/80">
           <Layers size={12} className="text-cyan" />
           <span className="text-[11px] font-semibold text-white">Timeline</span>
           <span className="text-[10px] text-muted ml-1">
@@ -1002,7 +1002,7 @@ export default function ComposePage() {
         </div>
 
         {/* Time ruler */}
-        <div className="px-3 h-5 border-b border-white/6 bg-[#0a0a14]/40 flex items-end overflow-x-auto relative">
+        <div className="px-3 h-5 border-b border-white/6 bg-bg/40 flex items-end overflow-x-auto relative">
           {(() => {
             const totalSec = Math.max(timelineDuration, 10);
             const marks: React.ReactNode[] = [];
@@ -1022,7 +1022,7 @@ export default function ComposePage() {
 
         {/* Timeline tracks */}
         <div ref={timelineRef}
-          className={`flex-1 overflow-auto min-h-0 px-3 py-2 bg-[#080812] transition-colors ${timelineDropHover ? "bg-cyan/[0.03]" : ""}`}
+          className={`flex-1 overflow-auto min-h-0 px-3 py-2 bg-bg transition-colors ${timelineDropHover ? "bg-cyan/[0.03]" : ""}`}
           onDragOver={(e) => { if (poolDragClip) { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setTimelineDropHover(true); } }}
           onDragLeave={() => setTimelineDropHover(false)}
           onDrop={() => { if (poolDragClip) { addToTimeline(poolDragClip); setPoolDragClip(null); setTimelineDropHover(false); } }}>
@@ -1069,7 +1069,7 @@ export default function ComposePage() {
                           setSelectedIdx(idx);
                         }}
                         className={`relative shrink-0 rounded cursor-pointer transition-all select-none group ${
-                          sel ? "ring-1 ring-cyan shadow-[0_0_8px_rgba(0,212,255,0.15)] z-10" : ""
+                          sel ? "ring-1 ring-cyan shadow-[0_0_8px_rgba(137,180,250,0.15)] z-10" : ""
                         } ${dragging ? "opacity-30 scale-95" : ""} ${over ? "ring-1 ring-cyan/40" : ""}`}
                         style={{ width: `${w}px` }}>
                         {/* Clip body */}
@@ -1124,8 +1124,8 @@ export default function ComposePage() {
                     return (
                       <div key={`a_${clip.id}`} className="shrink-0 h-5 rounded" style={{
                         width: `${w}px`,
-                        background: clip.has_audio ? "rgba(0,212,255,0.08)" : "rgba(255,255,255,0.02)",
-                        borderTop: clip.has_audio ? "1px solid rgba(0,212,255,0.2)" : "1px solid rgba(255,255,255,0.05)",
+                        background: clip.has_audio ? "rgba(137,180,250,0.08)" : "rgba(255,255,255,0.02)",
+                        borderTop: clip.has_audio ? "1px solid rgba(137,180,250,0.2)" : "1px solid rgba(255,255,255,0.05)",
                       }}>
                         {clip.has_audio && (
                           <div className="px-1 flex items-end gap-px h-full">
@@ -1146,7 +1146,7 @@ export default function ComposePage() {
       </div>
 
       {/* ── Status Bar ───────────────────────────────────── */}
-      <div className="h-7 border-t border-white/10 bg-[#0a0a16] flex items-center px-3 gap-4 shrink-0">
+      <div className="h-7 border-t border-white/10 bg-bg flex items-center px-3 gap-4 shrink-0">
         <div className="flex items-center gap-1.5">
           {apiStatus === "connected" ? (
             <><Wifi size={10} className="text-green-400" /><span className="text-[10px] text-green-400/80">Connected</span></>

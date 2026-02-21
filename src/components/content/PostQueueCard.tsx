@@ -75,7 +75,7 @@ export default function PostQueueCard({
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#1a1a2e]/80 p-4">
+    <div className="rounded-xl border border-white/10 bg-bg-card/80 p-4">
       <div className="flex gap-3">
         {/* Thumbnail */}
         {imageFilename && (
@@ -127,13 +127,13 @@ export default function PostQueueCard({
                 setScheduleTime(val);
                 if (val) onSchedule(post.id, new Date(val).toISOString());
               }}
-              className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-[10px] text-white/60 focus:border-[#c8ff00]/50 focus:outline-none"
+              className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-[10px] text-white/60 focus:border-lime/50 focus:outline-none"
             />
 
             <button
               onClick={handlePostNow}
               disabled={posting || enabledCount === 0}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#c8ff00]/20 text-[#c8ff00] text-[10px] font-medium hover:bg-[#c8ff00]/30 transition-colors disabled:opacity-30"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-lime/20 text-lime text-[10px] font-medium hover:bg-lime/30 transition-colors disabled:opacity-30"
             >
               {posting ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
               Post Now

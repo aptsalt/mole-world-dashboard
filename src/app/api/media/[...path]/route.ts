@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { stat, open } from "node:fs/promises";
 import path from "node:path";
 
-const OUTPUT_DIR = path.resolve(process.cwd(), "automation", "output");
-const AUTOMATION_OUTPUT_DIR = path.resolve(process.cwd(), "automation", "output");
-const VOICE_PROFILES_DIR = path.resolve(process.cwd(), "automation", "voice-library");
-const VOICE_SAMPLES_DIR = path.resolve(process.cwd(), "automation", "voice-library", "generated");
+/**
+ * Media file server — serves files from the project's public/ and data/ directories.
+ * In the full pipeline, this also serves from automation/output/ and voice-library/.
+ * In demo mode, most media paths will 404 (expected — no generated media on disk).
+ */
+
+const PROJECT_ROOT = process.cwd();
 
 const MIME_MAP: Record<string, string> = {
   ".mp4": "video/mp4",
@@ -26,28 +29,11 @@ export async function GET(
   const segments = (await params).path;
   const relativePath = segments.join("/");
 
-  // Route to the correct base directory
-  const isVoiceProfile = relativePath.startsWith("voice_profiles/");
-  const isVoiceSample = relativePath.startsWith("voice_samples/");
-  const isAutomation = relativePath.startsWith("automation/");
-  const baseDir = isVoiceProfile
-    ? VOICE_PROFILES_DIR
-    : isVoiceSample
-      ? VOICE_SAMPLES_DIR
-      : isAutomation
-        ? AUTOMATION_OUTPUT_DIR
-        : OUTPUT_DIR;
-  const resolvedRelative = isVoiceProfile
-    ? relativePath.replace("voice_profiles/", "references/")
-    : isVoiceSample
-      ? relativePath.replace("voice_samples/", "")
-      : isAutomation
-        ? relativePath.replace("automation/", "")
-        : relativePath;
+  // In demo mode, only serve from public/ directory
+  const filePath = path.resolve(PROJECT_ROOT, "public", relativePath);
 
   // Security: prevent path traversal
-  const filePath = path.resolve(baseDir, resolvedRelative);
-  if (!filePath.startsWith(path.resolve(baseDir))) {
+  if (!filePath.startsWith(path.resolve(PROJECT_ROOT, "public"))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

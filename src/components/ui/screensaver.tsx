@@ -40,6 +40,21 @@ export function Screensaver() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    // Read theme colors from CSS variables
+    const styles = getComputedStyle(document.documentElement);
+    const cyanColor = styles.getPropertyValue("--cyan").trim() || "#7dd3fc";
+    const mutedColor = styles.getPropertyValue("--muted").trim() || "#8a95b8";
+    const bgColor = styles.getPropertyValue("--bg").trim() || "#1f2435";
+
+    // Parse hex to RGB for canvas rgba() usage
+    const hexToRgb = (hex: string) => {
+      const m = hex.match(/^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
+      return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : { r: 137, g: 180, b: 250 };
+    };
+    const cyan = hexToRgb(cyanColor);
+    const muted = hexToRgb(mutedColor);
+    const bg = hexToRgb(bgColor);
+
     interface Star {
       x: number;
       y: number;
@@ -61,7 +76,7 @@ export function Screensaver() {
     let textFading = true;
 
     const animate = () => {
-      ctx.fillStyle = "rgba(15,15,26,0.15)";
+      ctx.fillStyle = `rgba(${bg.r},${bg.g},${bg.b},0.15)`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const cx = canvas.width / 2;
@@ -84,7 +99,7 @@ export function Screensaver() {
         const py = (star.y / star.pz) * cy + cy;
 
         const brightness = 1 - star.z / canvas.width;
-        ctx.strokeStyle = `rgba(0,212,255,${brightness * 0.7})`;
+        ctx.strokeStyle = `rgba(${cyan.r},${cyan.g},${cyan.b},${brightness * 0.7})`;
         ctx.lineWidth = brightness * 2;
         ctx.beginPath();
         ctx.moveTo(px, py);
@@ -98,14 +113,14 @@ export function Screensaver() {
       if (textOpacity >= 0.8) textFading = true;
 
       ctx.textAlign = "center";
-      ctx.fillStyle = `rgba(0,212,255,${textOpacity * 0.6})`;
+      ctx.fillStyle = `rgba(${cyan.r},${cyan.g},${cyan.b},${textOpacity * 0.6})`;
       ctx.font = "bold 48px 'Inter', system-ui, sans-serif";
       ctx.fillText("THE MOLE WORLD", cx, cy - 20);
-      ctx.fillStyle = `rgba(148,163,184,${textOpacity * 0.4})`;
+      ctx.fillStyle = `rgba(${muted.r},${muted.g},${muted.b},${textOpacity * 0.4})`;
       ctx.font = "16px 'Inter', system-ui, sans-serif";
       ctx.fillText("Production Dashboard", cx, cy + 20);
       ctx.font = "12px 'JetBrains Mono', monospace";
-      ctx.fillStyle = `rgba(148,163,184,${textOpacity * 0.2})`;
+      ctx.fillStyle = `rgba(${muted.r},${muted.g},${muted.b},${textOpacity * 0.2})`;
       ctx.fillText("Move mouse or press any key to wake up", cx, cy + 60);
 
       rafRef.current = requestAnimationFrame(animate);
@@ -122,7 +137,7 @@ export function Screensaver() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 cursor-none"
-      style={{ zIndex: 9999, background: "#0f0f1a" }}
+      style={{ zIndex: 9999, background: "var(--bg)" }}
       onClick={resetTimer}
     />
   );

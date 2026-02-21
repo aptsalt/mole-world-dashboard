@@ -47,8 +47,8 @@ export default function NewsCard({ story, index, selected, onToggle }: NewsCardP
       className={clsx(
         "rounded-xl border p-4 transition-all cursor-pointer",
         selected
-          ? "border-[#c8ff00]/60 bg-[#c8ff00]/5"
-          : "border-white/10 bg-[#1a1a2e]/80 hover:border-white/20",
+          ? "border-lime/60 bg-lime/5"
+          : "border-white/10 bg-bg-card/80 hover:border-white/20",
       )}
       onClick={() => onToggle(index + 1)}
     >
@@ -58,7 +58,7 @@ export default function NewsCard({ story, index, selected, onToggle }: NewsCardP
           className={clsx(
             "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 text-sm font-bold transition-colors",
             selected
-              ? "bg-[#c8ff00] text-[#0f0f1a]"
+              ? "bg-lime text-btn-text"
               : "bg-white/10 text-white/50",
           )}
         >

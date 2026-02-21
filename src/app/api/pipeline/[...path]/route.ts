@@ -12,7 +12,7 @@ export async function GET(
   try {
     const res = await fetch(`${FLASK_URL}${endpoint}`, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(3000),
     });
 
     if (!res.ok) {

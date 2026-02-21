@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,44 +14,161 @@ import {
   Presentation,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Sparkles,
   Zap,
   Video,
   ListOrdered,
   MessageSquare,
   Newspaper,
+  Clapperboard,
+  Monitor,
+  Activity,
+  Layers,
+  Send,
+  Image as ImageIcon,
+  AtSign,
+  Camera,
+  Youtube,
+  Music,
+  LayoutGrid,
+  AudioLines,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useDashboardStore } from "@/lib/store";
 
+// ── Types ──────────────────────────────────────────────────────
+
 interface NavItem {
-  href: string;
+  id: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  href?: string;
   badge?: string;
+  children?: NavItem[];
+  defaultExpanded?: boolean;
 }
 
+// ── Navigation structure ───────────────────────────────────────
+
 const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/clips", label: "Clips", icon: Film },
-  { href: "/storyboard", label: "Storyboard", icon: BookOpen },
-  { href: "/voices", label: "Voice Lab", icon: Mic },
-  { href: "/videos", label: "Videos", icon: Video, badge: "LIVE" },
-  { href: "/production", label: "Production", icon: Zap, badge: "AUTO" },
-  { href: "/whatsapp", label: "WhatsApp", icon: MessageSquare, badge: "WA" },
-  { href: "/content", label: "Content", icon: Newspaper, badge: "NEW" },
-  { href: "/queue", label: "Queue", icon: ListOrdered },
-  { href: "/logs", label: "Logs", icon: Terminal },
-  { href: "/compose", label: "Compose", icon: Settings },
-  { href: "/settings", label: "Settings", icon: Cog },
-  { href: "/pitch", label: "Pitch Deck", icon: Presentation },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/" },
+  { id: "orchestrate", label: "Orchestrate", icon: Clapperboard, href: "/orchestrate", badge: "CMD" },
+  {
+    id: "local-production",
+    label: "Local Production",
+    icon: Monitor,
+    defaultExpanded: true,
+    children: [
+      { id: "clips", label: "Clips", icon: Film, href: "/clips" },
+      { id: "compose", label: "Compose", icon: Layers, href: "/compose" },
+      { id: "videos", label: "Videos", icon: Video, href: "/videos", badge: "LIVE" },
+      { id: "storyboard", label: "Storyboard", icon: BookOpen, href: "/storyboard" },
+      { id: "voice-lab", label: "Voice Lab", icon: Mic, href: "/voices" },
+      { id: "narration-studio", label: "Narration", icon: AudioLines, href: "/narration" },
+    ],
+  },
+  {
+    id: "higgsfield",
+    label: "Higgsfield",
+    icon: Zap,
+    children: [
+      { id: "gallery", label: "Gallery", icon: ImageIcon, href: "/gallery", badge: "NEW" },
+      { id: "automation", label: "Automation", icon: Activity, href: "/production", badge: "AUTO" },
+      { id: "shot-queue", label: "Shot Queue", icon: ListOrdered, href: "/queue" },
+      { id: "whatsapp", label: "WhatsApp", icon: MessageSquare, href: "/whatsapp", badge: "WA" },
+    ],
+  },
+  {
+    id: "research",
+    label: "Research Hub",
+    icon: Newspaper,
+    children: [
+      { id: "research-dash", label: "Dashboard", icon: LayoutGrid, href: "/research", badge: "HUB" },
+      { id: "research-x", label: "X", icon: AtSign, href: "/research/x" },
+      { id: "research-instagram", label: "Instagram", icon: Camera, href: "/research/instagram" },
+      { id: "research-youtube", label: "YouTube", icon: Youtube, href: "/research/youtube" },
+      { id: "research-tiktok", label: "TikTok", icon: Music, href: "/research/tiktok" },
+      { id: "research-news", label: "News Feed", icon: Newspaper, href: "/research/news", badge: "RSS" },
+    ],
+  },
+  {
+    id: "distribution",
+    label: "Distribution",
+    icon: Send,
+    children: [
+      { id: "dist-hub", label: "Hub", icon: LayoutGrid, href: "/distribution", badge: "HUB" },
+      { id: "dist-x", label: "X", icon: AtSign, href: "/distribution/x" },
+      { id: "dist-instagram", label: "Instagram", icon: Camera, href: "/distribution/instagram" },
+      { id: "dist-youtube", label: "YouTube", icon: Youtube, href: "/distribution/youtube" },
+      { id: "dist-tiktok", label: "TikTok", icon: Music, href: "/distribution/tiktok" },
+    ],
+  },
+  {
+    id: "system",
+    label: "System",
+    icon: Cog,
+    children: [
+      { id: "logs", label: "Logs", icon: Terminal, href: "/logs" },
+      { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
+      { id: "pitch", label: "Pitch Deck", icon: Presentation, href: "/pitch" },
+    ],
+  },
 ];
+
+// ── Helpers ────────────────────────────────────────────────────
+
+const STORAGE_KEY = "mw-sidebar-groups";
+
+function loadExpandedGroups(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch {}
+  // Default: expand groups marked defaultExpanded
+  return new Set(NAV_ITEMS.filter((i) => i.defaultExpanded).map((i) => i.id));
+}
+
+function saveExpandedGroups(groups: Set<string>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...groups]));
+  } catch {}
+}
+
+/** Find the group ID that contains a given path */
+function findParentGroup(pathname: string): string | null {
+  for (const item of NAV_ITEMS) {
+    if (!item.children) continue;
+    for (const child of item.children) {
+      if (child.href && child.href !== "#") {
+        if (child.href === "/" ? pathname === "/" : pathname.startsWith(child.href)) {
+          return item.id;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// ── Component ──────────────────────────────────────────────────
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
+  const [flyoutGroup, setFlyoutGroup] = useState<string | null>(null);
+  const flyoutRef = useRef<HTMLDivElement>(null);
   const { status, clips } = useDashboardStore();
 
+  // Hydrate expanded groups from localStorage after mount (avoids SSR mismatch)
+  useEffect(() => {
+    setExpandedGroups(loadExpandedGroups());
+    setHydrated(true);
+  }, []);
+
+  // Progress stats
   const v1Done = status?.v1?.done ?? 0;
   const v2Done = status?.v2?.done ?? 0;
   const narDone = status?.audio_narrations ?? 0;
@@ -66,21 +183,231 @@ export function Sidebar() {
     ? new Set(clips.map((c) => c.scene_id)).size
     : 14;
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
+  // Auto-expand group containing active child
+  useEffect(() => {
+    const parentId = findParentGroup(pathname);
+    if (parentId && !expandedGroups.has(parentId)) {
+      setExpandedGroups((prev) => {
+        const next = new Set(prev);
+        next.add(parentId);
+        saveExpandedGroups(next);
+        return next;
+      });
+    }
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Close flyout on outside click
+  useEffect(() => {
+    if (!flyoutGroup) return;
+    const handler = (e: MouseEvent) => {
+      if (flyoutRef.current && !flyoutRef.current.contains(e.target as Node)) {
+        setFlyoutGroup(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [flyoutGroup]);
+
+  const isActive = (href?: string) => {
+    if (!href || href === "#") return false;
+    if (href === "/" || href === "/distribution") return pathname === href;
     return pathname.startsWith(href);
   };
+
+  const isGroupActive = (item: NavItem) => {
+    return item.children?.some((c) => isActive(c.href)) ?? false;
+  };
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      saveExpandedGroups(next);
+      return next;
+    });
+  };
+
+  // ── NavLeaf ────────────────────────────────────────────────
+
+  const NavLeaf = ({ item, isChild = false }: { item: NavItem; isChild?: boolean }) => {
+    const Icon = item.icon;
+    const active = isActive(item.href);
+
+    return (
+      <li>
+        <Link
+          href={item.href ?? "#"}
+          className={clsx(
+            "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            isChild && !collapsed && "ml-3 border-l border-white/[0.08] pl-5",
+            active
+              ? "bg-cyan/[0.08] text-cyan"
+              : "text-muted hover:bg-white/[0.04] hover:text-white"
+          )}
+          title={collapsed ? item.label : undefined}
+        >
+          {/* Active indicator bar */}
+          <span
+            className={clsx(
+              "absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-r-full bg-cyan transition-all duration-300",
+              active ? "h-5 opacity-100 indicator-pulse" : "h-0 opacity-0"
+            )}
+          />
+          <Icon
+            size={18}
+            className={clsx(
+              "shrink-0 transition-transform duration-200",
+              active && "scale-110",
+              !active && "group-hover:scale-105"
+            )}
+          />
+          {!collapsed && (
+            <>
+              <span className="truncate">{item.label}</span>
+              {item.badge && (
+                <span className={clsx(
+                  "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                  item.badge === "SOON"
+                    ? "bg-zinc-500/15 text-zinc-500"
+                    : "bg-cyan/15 text-cyan"
+                )}>
+                  {item.badge}
+                </span>
+              )}
+            </>
+          )}
+        </Link>
+      </li>
+    );
+  };
+
+  // ── NavGroup ───────────────────────────────────────────────
+
+  const NavGroup = ({ item }: { item: NavItem }) => {
+    const Icon = item.icon;
+    const expanded = expandedGroups.has(item.id);
+    const groupActive = isGroupActive(item);
+    const showFlyout = collapsed && flyoutGroup === item.id;
+
+    return (
+      <li className="relative">
+        {/* Group parent row */}
+        <button
+          onClick={() => {
+            if (collapsed) {
+              setFlyoutGroup((prev) => (prev === item.id ? null : item.id));
+            } else {
+              toggleGroup(item.id);
+            }
+          }}
+          className={clsx(
+            "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            groupActive
+              ? "text-cyan/70"
+              : "text-muted hover:bg-white/[0.04] hover:text-white"
+          )}
+          title={collapsed ? item.label : undefined}
+        >
+          <Icon
+            size={18}
+            className={clsx(
+              "shrink-0 transition-transform duration-200",
+              groupActive && "scale-110",
+              !groupActive && "group-hover:scale-105"
+            )}
+          />
+          {!collapsed && (
+            <>
+              <span className="truncate text-[11px] font-semibold uppercase tracking-wider">
+                {item.label}
+              </span>
+              <ChevronDown
+                size={14}
+                className={clsx(
+                  "ml-auto shrink-0 text-zinc-600 transition-transform duration-200",
+                  expanded && "rotate-180"
+                )}
+              />
+            </>
+          )}
+        </button>
+
+        {/* Expanded children (sidebar expanded mode) */}
+        {!collapsed && (
+          <div
+            className="nav-group-children"
+            data-expanded={expanded ? "true" : "false"}
+          >
+            <ul className="flex flex-col gap-0.5 pb-1">
+              {item.children?.map((child) => (
+                <NavLeaf key={child.id} item={child} isChild />
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Flyout popup (sidebar collapsed mode) */}
+        {showFlyout && (
+          <div
+            ref={flyoutRef}
+            className="absolute left-full top-0 z-50 ml-2 min-w-[180px] rounded-xl border border-white/[0.12] bg-bg-light p-2 shadow-xl"
+            onMouseLeave={() => setFlyoutGroup(null)}
+          >
+            <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              {item.label}
+            </div>
+            <ul className="flex flex-col gap-0.5">
+              {item.children?.map((child) => {
+                const ChildIcon = child.icon;
+                const childActive = isActive(child.href);
+                return (
+                  <li key={child.id}>
+                    <Link
+                      href={child.href ?? "#"}
+                      onClick={() => setFlyoutGroup(null)}
+                      className={clsx(
+                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-all",
+                        childActive
+                          ? "bg-cyan/[0.08] text-cyan"
+                          : "text-muted hover:bg-white/[0.06] hover:text-white"
+                      )}
+                    >
+                      <ChildIcon size={14} />
+                      <span>{child.label}</span>
+                      {child.badge && (
+                        <span className={clsx(
+                          "ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold",
+                          child.badge === "SOON"
+                            ? "bg-zinc-500/15 text-zinc-500"
+                            : "bg-cyan/15 text-cyan"
+                        )}>
+                          {child.badge}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </li>
+    );
+  };
+
+  // ── Render ─────────────────────────────────────────────────
 
   return (
     <aside
       className={clsx(
-        "sidebar-transition relative flex flex-col border-r border-white/[0.06] bg-[#0c0c18]",
+        "sidebar-transition relative flex flex-col border-r border-white/[0.08] bg-sidebar-bg",
         "h-screen shrink-0",
-        collapsed ? "w-[68px]" : "w-[240px]"
+        collapsed ? "w-[68px]" : "w-[236px]"
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-white/[0.06] px-4">
+      <div className="flex h-16 items-center gap-3 border-b border-white/[0.08] px-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan/10 text-cyan font-bold text-sm">
           MW
         </div>
@@ -99,55 +426,18 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         <ul className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={clsx(
-                    "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    active
-                      ? "bg-cyan/[0.08] text-cyan"
-                      : "text-muted hover:bg-white/[0.04] hover:text-white"
-                  )}
-                  title={collapsed ? item.label : undefined}
-                >
-                  {/* Active indicator bar - animated */}
-                  <span
-                    className={clsx(
-                      "absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-r-full bg-cyan transition-all duration-300",
-                      active ? "h-5 opacity-100 indicator-pulse" : "h-0 opacity-0"
-                    )}
-                  />
-                  <Icon
-                    size={18}
-                    className={clsx(
-                      "shrink-0 transition-transform duration-200",
-                      active && "scale-110",
-                      !active && "group-hover:scale-105"
-                    )}
-                  />
-                  {!collapsed && (
-                    <>
-                      <span className="truncate">{item.label}</span>
-                      {item.badge && (
-                        <span className="ml-auto rounded-full bg-cyan/15 px-2 py-0.5 text-[10px] font-semibold text-cyan">
-                          {item.badge}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
+          {NAV_ITEMS.map((item) =>
+            item.children ? (
+              <NavGroup key={item.id} item={item} />
+            ) : (
+              <NavLeaf key={item.id} item={item} />
+            )
+          )}
         </ul>
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-white/[0.06] p-3">
+      <div className="border-t border-white/[0.08] p-3">
         {!collapsed && (
           <div className="mb-3 rounded-lg bg-white/[0.03] p-3">
             <div className="flex items-center gap-2">

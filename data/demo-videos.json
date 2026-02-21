@@ -1,0 +1,36 @@
+{
+  "videos": [
+    { "shotId": "P1_S01_001", "sceneId": "P1_S01", "sceneName": "S01 · Underground World", "modelSuffix": "hailuo", "modelName": "Hailuo 2.3", "fileName": "P1_S01_001_hailuo.mp4", "sizeBytes": 8234567, "sizeKb": 8042, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s01-001.png", "createdAt": "2026-02-19T10:15:00.000Z" },
+    { "shotId": "P1_S01_001", "sceneId": "P1_S01", "sceneName": "S01 · Underground World", "modelSuffix": "seed15", "modelName": "Seedance 1.5 Pro", "fileName": "P1_S01_001_seed15.mp4", "sizeBytes": 7891234, "sizeKb": 7706, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s01-001.png", "createdAt": "2026-02-19T10:30:00.000Z" },
+    { "shotId": "P1_S01_001", "sceneId": "P1_S01", "sceneName": "S01 · Underground World", "modelSuffix": "kling25", "modelName": "Kling 2.5 Turbo", "fileName": "P1_S01_001_kling25.mp4", "sizeBytes": 9123456, "sizeKb": 8909, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s01-001.png", "createdAt": "2026-02-19T10:45:00.000Z" },
+    { "shotId": "P1_S01_002", "sceneId": "P1_S01", "sceneName": "S01 · Underground World", "modelSuffix": "hailuo", "modelName": "Hailuo 2.3", "fileName": "P1_S01_002_hailuo.mp4", "sizeBytes": 7654321, "sizeKb": 7475, "videoUrl": "/demo/videos/sample-clip-2.mp4", "heroUrl": "/demo/images/hero-s01-002.png", "createdAt": "2026-02-19T11:00:00.000Z" },
+    { "shotId": "P1_S01_002", "sceneId": "P1_S01", "sceneName": "S01 · Underground World", "modelSuffix": "seed15", "modelName": "Seedance 1.5 Pro", "fileName": "P1_S01_002_seed15.mp4", "sizeBytes": 8012345, "sizeKb": 7824, "videoUrl": "/demo/videos/sample-clip-2.mp4", "heroUrl": "/demo/images/hero-s01-002.png", "createdAt": "2026-02-19T11:15:00.000Z" },
+    { "shotId": "P1_S01_002", "sceneId": "P1_S01", "sceneName": "S01 · Underground World", "modelSuffix": "kling25", "modelName": "Kling 2.5 Turbo", "fileName": "P1_S01_002_kling25.mp4", "sizeBytes": 8567890, "sizeKb": 8367, "videoUrl": "/demo/videos/sample-clip-2.mp4", "heroUrl": "/demo/images/hero-s01-002.png", "createdAt": "2026-02-19T11:30:00.000Z" },
+    { "shotId": "P1_S02_001", "sceneId": "P1_S02", "sceneName": "S02 · Anaya's Morning", "modelSuffix": "hailuo", "modelName": "Hailuo 2.3", "fileName": "P1_S02_001_hailuo.mp4", "sizeBytes": 6789012, "sizeKb": 6630, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s02-001.png", "createdAt": "2026-02-19T12:00:00.000Z" },
+    { "shotId": "P1_S02_001", "sceneId": "P1_S02", "sceneName": "S02 · Anaya's Morning", "modelSuffix": "seed15", "modelName": "Seedance 1.5 Pro", "fileName": "P1_S02_001_seed15.mp4", "sizeBytes": 7234567, "sizeKb": 7065, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s02-001.png", "createdAt": "2026-02-19T12:15:00.000Z" },
+    { "shotId": "P1_S02_001", "sceneId": "P1_S02", "sceneName": "S02 · Anaya's Morning", "modelSuffix": "kling25", "modelName": "Kling 2.5 Turbo", "fileName": "P1_S02_001_kling25.mp4", "sizeBytes": 7890123, "sizeKb": 7705, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s02-001.png", "createdAt": "2026-02-19T12:30:00.000Z" },
+    { "shotId": "P1_S03_001", "sceneId": "P1_S03", "sceneName": "S03 · Deep Tunnels", "modelSuffix": "hailuo", "modelName": "Hailuo 2.3", "fileName": "P1_S03_001_hailuo.mp4", "sizeBytes": 9876543, "sizeKb": 9645, "videoUrl": "/demo/videos/sample-clip-2.mp4", "heroUrl": "/demo/images/hero-s03-001.png", "createdAt": "2026-02-19T13:00:00.000Z" },
+    { "shotId": "P1_S03_001", "sceneId": "P1_S03", "sceneName": "S03 · Deep Tunnels", "modelSuffix": "seed15", "modelName": "Seedance 1.5 Pro", "fileName": "P1_S03_001_seed15.mp4", "sizeBytes": 8765432, "sizeKb": 8560, "videoUrl": "/demo/videos/sample-clip-2.mp4", "heroUrl": "/demo/images/hero-s03-001.png", "createdAt": "2026-02-19T13:15:00.000Z" },
+    { "shotId": "P1_S03_001", "sceneId": "P1_S03", "sceneName": "S03 · Deep Tunnels", "modelSuffix": "kling25", "modelName": "Kling 2.5 Turbo", "fileName": "P1_S03_001_kling25.mp4", "sizeBytes": 10234567, "sizeKb": 9994, "videoUrl": "/demo/videos/sample-clip-2.mp4", "heroUrl": "/demo/images/hero-s03-001.png", "createdAt": "2026-02-19T13:30:00.000Z" },
+    { "shotId": "P1_S04_001", "sceneId": "P1_S04", "sceneName": "S04 · Data Stream", "modelSuffix": "hailuo", "modelName": "Hailuo 2.3", "fileName": "P1_S04_001_hailuo.mp4", "sizeBytes": 7345678, "sizeKb": 7173, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s04-001.png", "createdAt": "2026-02-19T14:00:00.000Z" },
+    { "shotId": "P1_S04_001", "sceneId": "P1_S04", "sceneName": "S04 · Data Stream", "modelSuffix": "seed15", "modelName": "Seedance 1.5 Pro", "fileName": "P1_S04_001_seed15.mp4", "sizeBytes": 6543210, "sizeKb": 6390, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s04-001.png", "createdAt": "2026-02-19T14:15:00.000Z" },
+    { "shotId": "P1_S04_001", "sceneId": "P1_S04", "sceneName": "S04 · Data Stream", "modelSuffix": "kling25", "modelName": "Kling 2.5 Turbo", "fileName": "P1_S04_001_kling25.mp4", "sizeBytes": 8901234, "sizeKb": 8692, "videoUrl": "/demo/videos/sample-clip-1.mp4", "heroUrl": "/demo/images/hero-s04-001.png", "createdAt": "2026-02-19T14:30:00.000Z" }
+  ],
+  "stats": {
+    "totalVideos": 15,
+    "totalShots": 87,
+    "shotsWithImages": 45,
+    "byModel": {
+      "Hailuo 2.3": 5,
+      "Seedance 1.5 Pro": 5,
+      "Kling 2.5 Turbo": 5
+    },
+    "byScene": {
+      "P1_S01": 6,
+      "P1_S02": 3,
+      "P1_S03": 3,
+      "P1_S04": 3
+    },
+    "totalSizeBytes": 127864185
+  }
+}

@@ -31,15 +31,17 @@ const SYSTEM_INFO = [
 ];
 
 const COLORS = [
-  { name: "Cyan", value: "#00d4ff", var: "--cyan" },
-  { name: "Amber", value: "#ff6b35", var: "--amber" },
-  { name: "Success", value: "#22c55e", var: "--success" },
-  { name: "Warning", value: "#eab308", var: "--warning" },
-  { name: "Error", value: "#ef4444", var: "--error" },
-  { name: "Background", value: "#0f0f1a", var: "--bg" },
-  { name: "Card", value: "#1a1a2e", var: "--bg-card" },
-  { name: "Text", value: "#e2e8f0", var: "--text" },
-  { name: "Muted", value: "#94a3b8", var: "--muted" },
+  { name: "Cyan", var: "--cyan" },
+  { name: "Accent", var: "--accent" },
+  { name: "Amber", var: "--amber" },
+  { name: "Lime", var: "--lime" },
+  { name: "Success", var: "--success" },
+  { name: "Warning", var: "--warning" },
+  { name: "Error", var: "--error" },
+  { name: "Background", var: "--bg" },
+  { name: "Card", var: "--bg-card" },
+  { name: "Text", var: "--text" },
+  { name: "Muted", var: "--muted" },
 ];
 
 interface Preferences {
@@ -341,17 +343,17 @@ export default function SettingsPage() {
       <div className="glass p-5">
         <div className="flex items-center gap-2 mb-4">
           <Palette size={16} className="text-cyan" />
-          <h3 className="text-sm font-semibold text-white">Design System \u2014 Deep Navy Theme</h3>
+          <h3 className="text-sm font-semibold text-white">Design System — Active Theme</h3>
         </div>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-9">
-          {COLORS.map(({ name, value }) => (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 lg:grid-cols-11">
+          {COLORS.map(({ name, var: cssVar }) => (
             <div key={name} className="text-center group cursor-pointer">
               <div
                 className="mx-auto h-12 w-12 rounded-lg border border-white/10 mb-2 transition-transform group-hover:scale-110 group-hover:shadow-lg"
-                style={{ background: value }}
+                style={{ background: `var(${cssVar})` }}
               />
               <p className="text-xs font-medium text-white">{name}</p>
-              <p className="text-[10px] font-mono text-muted">{value}</p>
+              <p className="text-[10px] font-mono text-muted">{cssVar}</p>
             </div>
           ))}
         </div>

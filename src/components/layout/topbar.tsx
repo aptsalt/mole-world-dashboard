@@ -193,7 +193,7 @@ export function Topbar() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#0c0c18]/80 px-4 backdrop-blur-md">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.08] bg-sidebar-bg/85 px-4 backdrop-blur-md">
         {/* Left: Breadcrumb */}
         <div className="flex items-center gap-2 text-sm">
           <span className="font-semibold text-cyan">MW</span>
@@ -300,7 +300,7 @@ export function Topbar() {
                   <circle
                     cx="7" cy="7" r="5"
                     fill="none"
-                    stroke="#00d4ff"
+                    stroke="var(--cyan)"
                     strokeWidth="1.5"
                     strokeDasharray={2 * Math.PI * 5}
                     strokeDashoffset={2 * Math.PI * 5 * (1 - autoRefresh.countdown / autoRefresh.interval)}
@@ -335,7 +335,7 @@ export function Topbar() {
         <div className="drawer-overlay" onClick={() => setNotifOpen(false)} />
       )}
       <div className={`notif-panel ${notifOpen ? "open" : ""}`}>
-        <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between p-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
             <Activity size={16} className="text-cyan" />
             <h3 className="text-sm font-semibold text-white">Notifications</h3>
@@ -378,7 +378,7 @@ export function Topbar() {
             );
           })}
         </div>
-        <div className="p-3 border-t border-white/[0.06]">
+        <div className="p-3 border-t border-white/[0.08]">
           <button className="w-full rounded-lg bg-white/[0.04] border border-white/[0.08] py-2 text-xs text-muted hover:text-white hover:border-white/[0.12] transition-all">
             Mark all as read
           </button>

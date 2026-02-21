@@ -1,0 +1,107 @@
+[
+  {
+    "id": "post_demo_1",
+    "storyTitle": "Phil Spencer is exiting Microsoft as AI executive takes over Xbox",
+    "storyUrl": "https://www.neowin.net/news/phil-spencer-is-exiting-microsoft-as-ai-executive-takes-over-xbox/",
+    "storySource": "Hacker News",
+    "caption": "What's next for Xbox? Phil Spencer exits Microsoft as AI exec steps up to lead Xbox. #XboxAI #GamingFuture",
+    "narrationScript": "Big shakeup at Xbox! Phil Spencer, who led the console giant for years, is exiting. An AI exec is taking over.",
+    "imagePrompt": "A stark conference room bathed in cold neon light, Phil Spencer silhouetted against digital code walls.",
+    "motionPrompt": "Slow dolly in on silhouette, backlit by flickering hologram. Pan to reveal shifting digital code.",
+    "imagePath": "/demo/images/news-xbox.png",
+    "videoPath": "/demo/videos/news-xbox.mp4",
+    "platforms": {
+      "x": { "enabled": true, "status": "posted", "postedAt": "2026-02-20T23:30:00.000Z", "postUrl": "https://x.com/status/123" },
+      "instagram": { "enabled": true, "status": "scheduled", "postedAt": null, "postUrl": null },
+      "tiktok": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "youtube": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null }
+    },
+    "scheduledAt": "2026-02-21T09:00:00.000Z",
+    "createdAt": "2026-02-20T23:24:17.374Z",
+    "updatedAt": "2026-02-20T23:30:00.000Z"
+  },
+  {
+    "id": "post_demo_2",
+    "storyTitle": "New Jersey Residents Defeat AI Data Center Plan",
+    "storyUrl": "https://www.commondreams.org/news/new-brunswick-ai-data-center",
+    "storySource": "Hacker News",
+    "caption": "Residents gave Big Tech a major pushback — New Jersey defeats AI data center in community win! #BigTech #AI",
+    "narrationScript": "Big Tech just got challenged by New Jersey residents who blocked a massive AI data center.",
+    "imagePrompt": "A sprawling abandoned AI data center with shattered glass facade and smoke billowing from ruptured servers.",
+    "motionPrompt": "Dolly in on shattered glass facade, smoke billowing. Pan to reveal ruptured servers.",
+    "imagePath": "/demo/images/news-nj.png",
+    "videoPath": null,
+    "platforms": {
+      "x": { "enabled": true, "status": "scheduled", "postedAt": null, "postUrl": null },
+      "instagram": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "tiktok": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "youtube": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null }
+    },
+    "scheduledAt": "2026-02-21T12:00:00.000Z",
+    "createdAt": "2026-02-21T00:15:57.445Z",
+    "updatedAt": "2026-02-21T00:15:57.445Z"
+  },
+  {
+    "id": "post_demo_3",
+    "storyTitle": "AI Becomes the Tone Police for White-Collar Workers",
+    "storyUrl": "https://www.bloomberg.com/news/articles/2026-01-21/white-collar-workers-use-ai",
+    "storySource": "Hacker News",
+    "caption": "What if your boss isn't the only one judging your tone? AI is the new tone police. #AIInTheWorkspace",
+    "narrationScript": "Your boss isn't the only one judging your emails anymore. AI tools now analyze your tone.",
+    "imagePrompt": "A white-collar worker illuminated by the cold glow of a holographic interface above their desk.",
+    "motionPrompt": "Slow dolly in on tense close-up, subtle pan to follow holographic interface.",
+    "imagePath": "/demo/images/news-tone.png",
+    "videoPath": "/demo/videos/news-tone.mp4",
+    "platforms": {
+      "x": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "instagram": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "tiktok": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "youtube": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null }
+    },
+    "scheduledAt": null,
+    "createdAt": "2026-02-21T00:23:53.449Z",
+    "updatedAt": "2026-02-21T00:23:53.449Z"
+  },
+  {
+    "id": "post_demo_4",
+    "storyTitle": "AgentCheck – AI Bot Posture Leaderboard",
+    "storyUrl": "https://www.agentcheck.com",
+    "storySource": "Hacker News",
+    "caption": "Want to know who's watching you online? AgentCheck reveals the AI bot leaderboard. #AI #Cybersecurity",
+    "narrationScript": "Ever wonder how AI bots behave online? Meet AgentCheck — a leaderboard ranking bots by their posture.",
+    "imagePrompt": "A metallic leaderboard structure glowing with neon-blue circuitry, holographic data streams dancing.",
+    "motionPrompt": "Low-angle dolly-in on metallic leaderboard, neon-blue circuitry pulsing.",
+    "imagePath": "/demo/images/news-agents.png",
+    "videoPath": "/demo/videos/news-agents.mp4",
+    "platforms": {
+      "x": { "enabled": true, "status": "draft", "postedAt": null, "postUrl": null },
+      "instagram": { "enabled": true, "status": "draft", "postedAt": null, "postUrl": null },
+      "tiktok": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "youtube": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null }
+    },
+    "scheduledAt": null,
+    "createdAt": "2026-02-21T00:27:58.755Z",
+    "updatedAt": "2026-02-21T00:27:58.755Z"
+  },
+  {
+    "id": "post_demo_5",
+    "storyTitle": "Delegate – AI Engineering Manager for Async Multitasking",
+    "storyUrl": "https://github.com/nikhilgarg28/delegate",
+    "storySource": "Hacker News",
+    "caption": "Tired of juggling tasks? Meet Delegate — AI eng manager running async multitasking agents! #AI #ProductivityHacks",
+    "narrationScript": "Imagine an AI that manages entire teams — no meetings, no delays. Delegate runs async agents to tackle tasks.",
+    "imagePrompt": "A towering translucent humanoid figure in a vast glowing control room, composed of swirling neon-blue circuitry.",
+    "motionPrompt": "Slow dolly in on the towering figure, neon circuitry pulsing; smooth tracking shot around it.",
+    "imagePath": "/demo/images/news-delegate.png",
+    "videoPath": "/demo/videos/news-delegate.mp4",
+    "platforms": {
+      "x": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "instagram": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "tiktok": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null },
+      "youtube": { "enabled": false, "status": "draft", "postedAt": null, "postUrl": null }
+    },
+    "scheduledAt": null,
+    "createdAt": "2026-02-21T00:31:50.972Z",
+    "updatedAt": "2026-02-21T00:31:50.972Z"
+  }
+]

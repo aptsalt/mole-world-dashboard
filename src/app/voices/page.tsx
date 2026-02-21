@@ -33,6 +33,8 @@ interface VoiceLibrary {
 
 type CategoryKey = "all" | "western_male" | "western_female" | "east_asian_male" | "east_asian_female" | "south_asian_male" | "south_asian_female" | "movie_character";
 type QualityFilter = "all" | "pending" | "good" | "replace" | "has_clip" | "no_clip";
+type GenderFilter = "all" | "male" | "female";
+type RegionFilter = "all" | "western" | "east_asian" | "south_asian";
 
 const CATEGORY_LABELS: Record<string, string> = {
   all: "All Voices",
@@ -94,6 +96,8 @@ function WaveformBar({ color, playing }: { color: string; playing: boolean }) {
 export default function VoicesPage() {
   const [library, setLibrary] = useState<VoiceLibrary | null>(null);
   const [category, setCategory] = useState<CategoryKey>("all");
+  const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
+  const [regionFilter, setRegionFilter] = useState<RegionFilter>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
   const [qualityFilter, setQualityFilter] = useState<QualityFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,7 +107,7 @@ export default function VoicesPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const fetchVoices = useCallback(() => {
-    fetch("/api/voices")
+    fetch("/api/voices", { signal: AbortSignal.timeout(5000) })
       .then((r) => r.json())
       .then((data) => setLibrary(data as VoiceLibrary))
       .catch(() => {});
@@ -121,6 +125,17 @@ export default function VoicesPage() {
   const filteredVoices = useMemo(() => {
     return voices.filter((v) => {
       if (category !== "all" && v.category !== category) return false;
+      // Gender filter: movie_character passes through
+      if (genderFilter !== "all" && v.category !== "movie_character") {
+        if (genderFilter === "male" && !v.category.includes("_male")) return false;
+        if (genderFilter === "female" && !v.category.includes("_female")) return false;
+      }
+      // Region filter: movie_character passes through
+      if (regionFilter !== "all" && v.category !== "movie_character") {
+        if (regionFilter === "western" && !v.category.startsWith("western")) return false;
+        if (regionFilter === "east_asian" && !v.category.startsWith("east_asian")) return false;
+        if (regionFilter === "south_asian" && !v.category.startsWith("south_asian")) return false;
+      }
       if (languageFilter !== "all" && v.language !== languageFilter) return false;
       if (qualityFilter === "has_clip" && !v.hasReference) return false;
       if (qualityFilter === "no_clip" && v.hasReference) return false;
@@ -133,7 +148,7 @@ export default function VoicesPage() {
       }
       return true;
     });
-  }, [voices, category, languageFilter, qualityFilter, searchQuery]);
+  }, [voices, category, genderFilter, regionFilter, languageFilter, qualityFilter, searchQuery]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: voices.length };
@@ -247,7 +262,7 @@ export default function VoicesPage() {
         </div>
         <button
           onClick={fetchVoices}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted hover:text-white hover:bg-white/[0.08] transition-colors border border-white/[0.06]"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted hover:text-white hover:bg-white/[0.08] transition-colors border border-white/[0.10]"
         >
           <RefreshCw size={11} />
           Refresh
@@ -257,8 +272,8 @@ export default function VoicesPage() {
       {/* Stats Bar */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Total Voices", value: voices.length, color: "#00d4ff", icon: AudioWaveform },
-          { label: "Clips Ready", value: clipCount, color: "#c8ff00", icon: FileAudio },
+          { label: "Total Voices", value: voices.length, color: "var(--cyan)", icon: AudioWaveform },
+          { label: "Clips Ready", value: clipCount, color: "var(--lime)", icon: FileAudio },
           { label: "Approved", value: qualityCounts.good, color: "#22c55e", icon: ThumbsUp },
           { label: "Needs Replace", value: qualityCounts.replace, color: "#ef4444", icon: ThumbsDown },
         ].map((s) => (
@@ -285,9 +300,38 @@ export default function VoicesPage() {
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${(clipCount / Math.max(voices.length, 1)) * 100}%`,
-              background: "linear-gradient(90deg, #c8ff00, #22c55e)",
+              background: "linear-gradient(90deg, var(--lime), var(--success))",
             }}
           />
+        </div>
+      </div>
+
+      {/* Gender & Region Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <User size={12} className="text-muted" />
+          <select
+            value={genderFilter}
+            onChange={(e) => setGenderFilter(e.target.value as GenderFilter)}
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-xs text-white outline-none"
+          >
+            <option value="all">All Genders</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Globe size={12} className="text-muted" />
+          <select
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value as RegionFilter)}
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-xs text-white outline-none"
+          >
+            <option value="all">All Regions</option>
+            <option value="western">Western</option>
+            <option value="east_asian">East Asian</option>
+            <option value="south_asian">South Asian</option>
+          </select>
         </div>
       </div>
 
@@ -300,7 +344,7 @@ export default function VoicesPage() {
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
               category === cat
                 ? "bg-white/10 text-white border-white/20"
-                : "bg-white/[0.02] text-muted border-white/[0.06] hover:bg-white/[0.05]"
+                : "bg-white/[0.02] text-muted border-white/[0.10] hover:bg-white/[0.05]"
             }`}
           >
             {CATEGORY_LABELS[cat]}
@@ -365,7 +409,7 @@ export default function VoicesPage() {
             <div
               key={voice.key}
               className={`rounded-xl bg-white/[0.03] border p-4 hover:bg-white/[0.05] transition-all hover-lift ${
-                isDefault ? "border-cyan/30" : "border-white/[0.06] hover:border-white/[0.1]"
+                isDefault ? "border-cyan/30" : "border-white/[0.10] hover:border-white/[0.1]"
               }`}
             >
               {/* Header */}
@@ -400,7 +444,7 @@ export default function VoicesPage() {
                 <div className="flex flex-col items-end gap-1">
                   {/* Clip status indicator */}
                   {hasClip ? (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#c8ff00]/15 text-[#c8ff00] font-mono flex items-center gap-0.5">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-lime/15 text-lime font-mono flex items-center gap-0.5">
                       <FileAudio size={8} /> clip
                     </span>
                   ) : (

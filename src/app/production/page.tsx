@@ -245,7 +245,7 @@ function PreviewLightbox({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="relative max-h-[90vh] w-full max-w-5xl rounded-2xl border border-white/[0.08] bg-[#0f0f1a] p-4 overflow-y-auto"
+        className="relative max-h-[90vh] w-full max-w-5xl rounded-2xl border border-white/[0.08] bg-bg p-4 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
