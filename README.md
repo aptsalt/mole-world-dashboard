@@ -108,6 +108,54 @@ The main dashboard packs 20+ purpose-built widgets:
 - **Production milestones timeline** — visual progress markers
 - **Currently rendering indicator** — heartbeat animation with live timer and queue time
 
+### Video Browser
+
+![Videos](docs/screenshots/videos.png)
+
+Browse all generated clips organized by model and scene, with file size stats and inline playback.
+
+### Production Pipeline Control
+
+![Production](docs/screenshots/production.png)
+
+Live automation control center — queue management with shot-level retry/skip, service status monitoring (Ollama, Browser), activity feed, and CLI command reference.
+
+### AI Content Curation
+
+![Content](docs/screenshots/content.png)
+
+AI-powered news curation dashboard — RSS digest ranked by Claude AI, visual/share scores, multi-platform social post queue with scheduling.
+
+### WhatsApp Family Pipeline
+
+![WhatsApp](docs/screenshots/whatsapp.png)
+
+Family pipeline interface — WhatsApp bridge status, job queue with audio translation, delivery tracking, and health monitoring.
+
+### Queue Editor
+
+![Queue](docs/screenshots/queue.png)
+
+Shot render queue editor — per-shot configuration, markdown import, frame upload, drag-and-drop reorder.
+
+### Logs Viewer
+
+![Logs](docs/screenshots/logs.png)
+
+Pipeline log viewer with color-coded entries, search, and status indicators.
+
+### Settings
+
+![Settings](docs/screenshots/settings.png)
+
+Pipeline configuration — resolution, FPS, model selection, ComfyUI connection, and environment info.
+
+### Pitch Deck
+
+![Pitch Deck](docs/screenshots/pitch-deck.png)
+
+Development journey presentation — project timeline, technical decisions, and production milestones.
+
 ### UI/UX Polish
 
 - **Glass-morphism dark theme** — `#0f0f1a` deep navy background, `#00d4ff` electric cyan accent, `blur(16px)` frosted glass cards
