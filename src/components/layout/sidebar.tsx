@@ -15,6 +15,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Zap,
+  Video,
+  ListOrdered,
+  MessageSquare,
+  Newspaper,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useDashboardStore } from "@/lib/store";
@@ -31,10 +36,15 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/clips", label: "Clips", icon: Film },
   { href: "/storyboard", label: "Storyboard", icon: BookOpen },
   { href: "/voices", label: "Voice Lab", icon: Mic },
+  { href: "/videos", label: "Videos", icon: Video, badge: "LIVE" },
+  { href: "/production", label: "Production", icon: Zap, badge: "AUTO" },
+  { href: "/whatsapp", label: "WhatsApp", icon: MessageSquare, badge: "WA" },
+  { href: "/content", label: "Content", icon: Newspaper, badge: "NEW" },
+  { href: "/queue", label: "Queue", icon: ListOrdered },
   { href: "/logs", label: "Logs", icon: Terminal },
   { href: "/compose", label: "Compose", icon: Settings },
   { href: "/settings", label: "Settings", icon: Cog },
-  { href: "/pitch", label: "Pitch Deck", icon: Presentation, badge: "NEW" },
+  { href: "/pitch", label: "Pitch Deck", icon: Presentation },
 ];
 
 export function Sidebar() {

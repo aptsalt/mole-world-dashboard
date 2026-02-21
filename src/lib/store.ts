@@ -5,8 +5,20 @@ import type {
   Clip,
   Storyboard,
   VoiceData,
+  AutomationServiceStatus,
+  AutomationQueueItem,
+  AutomationEvent,
 } from './types';
-import { getStatus, getStats, getClips, getStoryboard, getVoices } from './api';
+import {
+  getStatus,
+  getStats,
+  getClips,
+  getStoryboard,
+  getVoices,
+  getAutomationStatus,
+  getAutomationQueue,
+  getAutomationEvents,
+} from './api';
 
 interface DashboardStore {
   status: PipelineStatus | null;
@@ -14,6 +26,9 @@ interface DashboardStore {
   clips: Clip[];
   storyboard: Storyboard | null;
   voices: VoiceData | null;
+  automationStatus: AutomationServiceStatus | null;
+  automationQueue: AutomationQueueItem[];
+  automationEvents: AutomationEvent[];
   currentPage: string;
   isLoading: boolean;
   error: string | null;
@@ -27,6 +42,7 @@ interface DashboardStore {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   refreshAll: () => Promise<void>;
+  refreshAutomation: () => Promise<void>;
 }
 
 export const useDashboardStore = create<DashboardStore>((set) => ({
@@ -35,6 +51,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   clips: [],
   storyboard: null,
   voices: null,
+  automationStatus: null,
+  automationQueue: [],
+  automationEvents: [],
   currentPage: 'overview',
   isLoading: false,
   error: null,
@@ -62,6 +81,19 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load data';
       set({ error: message, isLoading: false });
+    }
+  },
+
+  refreshAutomation: async () => {
+    try {
+      const [automationStatus, automationQueue, automationEvents] = await Promise.all([
+        getAutomationStatus(),
+        getAutomationQueue(),
+        getAutomationEvents(),
+      ]);
+      set({ automationStatus, automationQueue, automationEvents });
+    } catch {
+      // Silently fail — automation may not be running
     }
   },
 }));

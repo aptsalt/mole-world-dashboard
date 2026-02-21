@@ -333,6 +333,11 @@ The narrator tone — `"deep, measured, slightly weary, like someone remembering
 |------|-------|-------------|
 | **Dashboard** | `/` | Production overview with 20+ widgets: progress rings, pipeline health gauge, GPU stats, render heatmap, performance charts, activity feed, milestones, render queue |
 | **Clips** | `/clips` | 89-shot gallery with Grid/Mosaic/List views, filters, video playback, V1/V2 comparison slider, cinema modal, mini player, shot drawer |
+| **Videos** | `/videos` | Video browser with model-based filtering, scene grouping, file size stats, and inline playback |
+| **Production** | `/production` | Live automation control — queue management, service status, model image gallery, event feed, shot-level retry/skip actions |
+| **Content** | `/content` | AI news curation dashboard — RSS digest, Claude-ranked articles, social post queue, multi-platform publishing |
+| **WhatsApp** | `/whatsapp` | Family pipeline interface — WhatsApp bridge status, job queue, audio translation, delivery tracking |
+| **Queue** | `/queue` | Shot render queue editor — drag-and-drop reorder, per-shot config, markdown import, frame upload |
 | **Storyboard** | `/storyboard` | Full screenplay: film info, character profiles, scene timeline, expandable scene accordions with per-shot details |
 | **Voice Lab** | `/voices` | 7 voice profiles with waveform previews, 89 voice assignments, scene audio coverage, generation progress |
 | **Compose** | `/compose` | Video stitching: render presets, crossfade control, narration toggle, visual timeline, title card preview, readiness checklist |
@@ -385,27 +390,33 @@ mole-world-dashboard/
 │   └── demo-voices.json     # Voice assignments & 7 profiles
 ├── docs/screenshots/        # README screenshots
 ├── src/
-│   ├── app/
-│   │   ├── page.tsx         # Dashboard — 1056 lines, 20+ widgets
-│   │   ├── clips/           # Clip gallery with video playback
-│   │   ├── storyboard/      # Screenplay viewer
-│   │   ├── voices/          # Voice Lab
-│   │   ├── compose/         # Film compositor
-│   │   ├── logs/            # Pipeline log viewer
-│   │   ├── settings/        # Configuration
-│   │   ├── pitch/           # Development journey
-│   │   ├── api/media/       # Video streaming (HTTP range requests, local only)
-│   │   ├── layout.tsx       # Root layout (Inter + JetBrains Mono fonts)
-│   │   └── globals.css      # Theme + 811 lines of custom animations
+│   ├── app/                    # 14 pages
+│   │   ├── page.tsx            # Dashboard — 20+ widgets
+│   │   ├── clips/              # Clip gallery with video playback
+│   │   ├── videos/             # Video browser with model filtering
+│   │   ├── production/         # Live automation control center
+│   │   ├── content/            # AI news curation & social publishing
+│   │   ├── whatsapp/           # Family pipeline interface
+│   │   ├── queue/              # Shot render queue editor
+│   │   ├── storyboard/         # Screenplay viewer
+│   │   ├── voices/             # Voice Lab
+│   │   ├── compose/            # Film compositor
+│   │   ├── logs/               # Pipeline log viewer
+│   │   ├── settings/           # Configuration
+│   │   ├── pitch/              # Development journey
+│   │   ├── api/                # API routes (media, queue, content, voices)
+│   │   ├── layout.tsx          # Root layout (Inter + JetBrains Mono)
+│   │   └── globals.css         # Theme + custom animations
 │   ├── components/
-│   │   ├── layout/          # AppShell, Sidebar, Topbar
-│   │   └── ui/              # ClipComparison, MiniPlayer, CommandPalette,
-│   │                        # FAB, Toast, Confetti, Screensaver, Skeleton, etc.
+│   │   ├── layout/             # AppShell, Sidebar, Topbar
+│   │   ├── ui/                 # MiniPlayer, CommandPalette, FAB, Toast, etc.
+│   │   ├── content/            # NewsCard, ContentEditor, PostQueueCard
+│   │   └── queue/              # QueueAccordionItem, QueueToolbar, MdImportPanel
 │   └── lib/
-│       ├── types.ts         # Full TypeScript interface system (zero any)
-│       ├── api.ts           # Dual-mode data fetching (demo/live)
-│       ├── store.ts         # Zustand global state
-│       └── utils.ts         # Formatting & color utilities
+│       ├── types.ts            # Full TypeScript interface system
+│       ├── api.ts              # Dual-mode data fetching (demo/live)
+│       ├── store.ts            # Zustand global state
+│       └── utils.ts            # Formatting & color utilities
 ├── package.json
 ├── next.config.ts           # Conditional static export for GitHub Pages
 └── tsconfig.json

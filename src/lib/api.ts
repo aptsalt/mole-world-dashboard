@@ -6,6 +6,9 @@ import type {
   Storyboard,
   LogsResponse,
   VoiceData,
+  AutomationServiceStatus,
+  AutomationQueueItem,
+  AutomationEvent,
 } from './types';
 
 // Static demo data — used as fallback on GitHub Pages or when Flask is down
@@ -87,4 +90,101 @@ export function getVideoUrl(relativePath: string): string {
 export function getAudioUrl(relativePath: string): string {
   const normalized = relativePath.replace(/\\/g, "/");
   return `/api/media/${normalized}`;
+}
+
+// Automation output — images/videos from Higgsfield pipeline
+// Path format: /api/media/automation/{sceneId}/{shotId}_hero.png
+export function getAutomationImageUrl(shotId: string): string {
+  const sceneId = shotId.replace(/_\d+$/, "");
+  return `/api/media/automation/${sceneId}/${shotId}_hero.png`;
+}
+
+export function getAutomationVideoUrl(shotId: string, model: string): string {
+  const sceneId = shotId.replace(/_\d+$/, "");
+  const suffix = model.replace(/[.-]/g, "").replace("25", "25").replace("wan25", "wan25");
+  const modelSuffix = model === "wan-2.5" ? "wan25" : model === "seedance-1.5-pro" ? "seed15" : model === "sora-2-queue" ? "sora2" : model;
+  return `/api/media/automation/${sceneId}/${shotId}_${modelSuffix}.mp4`;
+}
+
+// ── Automation API ─────────────────────────────────────────────
+
+const DEMO_AUTOMATION_STATUS: AutomationServiceStatus = {
+  state: "idle",
+  currentShot: null,
+  currentStep: null,
+  queueStats: { total: 89, pending: 62, completed: 22, failed: 3, inProgress: 0, pausedForCredits: 2, skipped: 0 },
+  ollamaConnected: false,
+  browserConnected: false,
+  startedAt: null,
+  lastActivity: null,
+  uptime: 0,
+  errors: [],
+};
+
+const DEMO_AUTOMATION_EVENTS: AutomationEvent[] = [
+  { id: "evt_1", type: "service_started", shotId: null, message: "Automation started", details: {}, timestamp: new Date(Date.now() - 3600000).toISOString() },
+  { id: "evt_2", type: "shot_completed", shotId: "P1_S01_001", message: "Shot P1_S01_001 completed", details: { quality: 8 }, timestamp: new Date(Date.now() - 3500000).toISOString() },
+  { id: "evt_3", type: "shot_completed", shotId: "P1_S01_002", message: "Shot P1_S01_002 completed", details: { quality: 7 }, timestamp: new Date(Date.now() - 3400000).toISOString() },
+  { id: "evt_4", type: "image_retry", shotId: "P1_S02_001", message: "Image quality 4/10 — retrying", details: {}, timestamp: new Date(Date.now() - 3300000).toISOString() },
+  { id: "evt_5", type: "shot_failed", shotId: "P1_S03_002", message: "Shot failed: timeout", details: {}, timestamp: new Date(Date.now() - 3200000).toISOString() },
+];
+
+export async function getAutomationStatus(): Promise<AutomationServiceStatus> {
+  if (DEMO_ONLY) return DEMO_AUTOMATION_STATUS;
+  try {
+    const res = await fetch('/api/automation/status', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json();
+  } catch {
+    return DEMO_AUTOMATION_STATUS;
+  }
+}
+
+export async function getAutomationQueue(): Promise<AutomationQueueItem[]> {
+  if (DEMO_ONLY) return [];
+  try {
+    const res = await fetch('/api/automation/queue', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getAutomationEvents(): Promise<AutomationEvent[]> {
+  if (DEMO_ONLY) return DEMO_AUTOMATION_EVENTS;
+  try {
+    const res = await fetch('/api/automation/status', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`${res.status}`);
+    const data = await res.json();
+    return data.events ?? DEMO_AUTOMATION_EVENTS;
+  } catch {
+    return DEMO_AUTOMATION_EVENTS;
+  }
+}
+
+export async function automationQueueAction(shotId: string, action: 'retry' | 'skip'): Promise<boolean> {
+  try {
+    const res = await fetch('/api/automation/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shotId, action }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function approveCredits(shotId: string, approved: boolean): Promise<boolean> {
+  try {
+    const res = await fetch('/api/automation/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shotId, approved }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

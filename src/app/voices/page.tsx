@@ -1,31 +1,86 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { useDashboardStore } from "@/lib/store";
-import { getSceneColor } from "@/lib/utils";
-import { getAudioUrl } from "@/lib/api";
 import {
   Mic, Volume2, CheckCircle2, XCircle, User,
-  Search, AudioWaveform, Play, Pause,
+  Search, AudioWaveform, Play, Pause, Filter,
+  Globe, Sparkles, AlertCircle, ThumbsUp, ThumbsDown,
+  Download, RefreshCw, FileAudio,
 } from "lucide-react";
-import { VoicesSkeleton } from "@/components/ui/skeleton";
 
+// ── Types ──────────────────────────────────────────────────────
+interface VoiceEntry {
+  key: string;
+  name: string;
+  category: string;
+  language: string;
+  accent: string | null;
+  engine: string;
+  referenceClip: string;
+  referenceSource: string;
+  sampleText: string;
+  quality: string;
+  tags: string[];
+  hasReference?: boolean;
+  downloadMeta?: { source: string; downloadedAt: string };
+}
+
+interface VoiceLibrary {
+  version: string;
+  defaultVoice: string;
+  voices: VoiceEntry[];
+}
+
+type CategoryKey = "all" | "western_male" | "western_female" | "east_asian_male" | "east_asian_female" | "south_asian_male" | "south_asian_female" | "movie_character";
+type QualityFilter = "all" | "pending" | "good" | "replace" | "has_clip" | "no_clip";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  all: "All Voices",
+  western_male: "Western Male",
+  western_female: "Western Female",
+  east_asian_male: "East Asian Male",
+  east_asian_female: "East Asian Female",
+  south_asian_male: "South Asian Male",
+  south_asian_female: "South Asian Female",
+  movie_character: "Movie Characters",
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  western_male: "#3b82f6",
+  western_female: "#ec4899",
+  east_asian_male: "#f59e0b",
+  east_asian_female: "#a855f7",
+  south_asian_male: "#22c55e",
+  south_asian_female: "#06b6d4",
+  movie_character: "#ef4444",
+};
+
+const QUALITY_COLORS: Record<string, string> = {
+  pending: "#6b7280",
+  good: "#22c55e",
+  replace: "#ef4444",
+};
+
+const LANGUAGE_FLAGS: Record<string, string> = {
+  en: "EN", hi: "HI", zh: "ZH", ja: "JA", ko: "KO", ta: "TA", ur: "UR",
+};
+
+// ── Waveform ──────────────────────────────────────────────────
 function WaveformBar({ color, playing }: { color: string; playing: boolean }) {
-  const bars = 24;
-  const durations = ["0.4s", "0.5s", "0.6s", "0.7s"];
+  const bars = 20;
   return (
-    <div className="flex items-end gap-[2px] h-8">
+    <div className="flex items-end gap-[2px] h-6">
       {Array.from({ length: bars }, (_, i) => {
         const baseHeight = 20 + Math.sin(i * 0.8) * 30 + Math.cos(i * 1.2) * 20;
         return (
           <div
             key={i}
-            className={`w-[3px] rounded-full ${playing ? "waveform-active" : ""}`}
+            className={`w-[2px] rounded-full ${playing ? "waveform-active" : ""}`}
             style={{
               height: `${baseHeight}%`,
               background: color,
               opacity: playing ? 0.8 : 0.3,
-              animationDuration: durations[i % 4],
+              animationDuration: ["0.4s", "0.5s", "0.6s", "0.7s"][i % 4],
               animationDelay: `${i * 30}ms`,
             }}
           />
@@ -35,106 +90,148 @@ function WaveformBar({ color, playing }: { color: string; playing: boolean }) {
   );
 }
 
-type VoiceFilter = "all" | "has_audio" | "missing";
-
+// ── Page ───────────────────────────────────────────────────────
 export default function VoicesPage() {
-  const { voices, refreshAll } = useDashboardStore();
-  const [filter, setFilter] = useState<VoiceFilter>("all");
+  const [library, setLibrary] = useState<VoiceLibrary | null>(null);
+  const [category, setCategory] = useState<CategoryKey>("all");
+  const [languageFilter, setLanguageFilter] = useState<string>("all");
+  const [qualityFilter, setQualityFilter] = useState<QualityFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [playingProfile, setPlayingProfile] = useState<string | null>(null);
-  const [playingShot, setPlayingShot] = useState<string | null>(null);
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const [testingVoice, setTestingVoice] = useState<string | null>(null);
+  const [updatingQuality, setUpdatingQuality] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  const fetchVoices = useCallback(() => {
+    fetch("/api/voices")
+      .then((r) => r.json())
+      .then((data) => setLibrary(data as VoiceLibrary))
+      .catch(() => {});
+  }, []);
+
+  // Initial load + auto-refresh every 15s
   useEffect(() => {
-    if (!voices) refreshAll();
-  }, [voices, refreshAll]);
+    fetchVoices();
+    const interval = setInterval(fetchVoices, 15_000);
+    return () => clearInterval(interval);
+  }, [fetchVoices]);
 
-  // Handle profile voice sample playback
-  const toggleProfileAudio = useCallback((profileKey: string) => {
-    const audio = audioRef.current;
-    if (!audio) return;
+  const voices = library?.voices ?? [];
 
-    if (playingProfile === profileKey) {
-      audio.pause();
-      audio.currentTime = 0;
-      setPlayingProfile(null);
-      return;
-    }
-
-    // F5TTS sample URL via media API
-    const sampleUrl = `/api/media/voice_samples/${profileKey}_f5tts.wav`;
-    audio.src = sampleUrl;
-    audio.play().catch(() => {
-      // Try reference audio as fallback
-      audio.src = `/api/media/voice_profiles/${profileKey}/reference.wav`;
-      audio.play().catch(() => {});
+  const filteredVoices = useMemo(() => {
+    return voices.filter((v) => {
+      if (category !== "all" && v.category !== category) return false;
+      if (languageFilter !== "all" && v.language !== languageFilter) return false;
+      if (qualityFilter === "has_clip" && !v.hasReference) return false;
+      if (qualityFilter === "no_clip" && v.hasReference) return false;
+      if (qualityFilter === "good" && v.quality !== "good") return false;
+      if (qualityFilter === "pending" && v.quality !== "pending") return false;
+      if (qualityFilter === "replace" && v.quality !== "replace") return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return v.name.toLowerCase().includes(q) || v.key.includes(q) || v.tags.some((t) => t.includes(q));
+      }
+      return true;
     });
-    setPlayingProfile(profileKey);
-    setPlayingShot(null);
-  }, [playingProfile]);
+  }, [voices, category, languageFilter, qualityFilter, searchQuery]);
 
-  // Handle individual shot audio playback
-  const toggleShotAudio = useCallback((shotId: string) => {
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: voices.length };
+    for (const v of voices) {
+      counts[v.category] = (counts[v.category] ?? 0) + 1;
+    }
+    return counts;
+  }, [voices]);
+
+  const languages = useMemo(() => {
+    const set = new Set(voices.map((v) => v.language));
+    return ["all", ...Array.from(set).sort()];
+  }, [voices]);
+
+  const togglePlayback = useCallback((voiceKey: string) => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (playingShot === shotId) {
+    if (playingVoice === voiceKey) {
       audio.pause();
       audio.currentTime = 0;
-      setPlayingShot(null);
+      setPlayingVoice(null);
       return;
     }
 
-    const audioUrl = getAudioUrl(`audio/${shotId}.wav`);
-    audio.src = audioUrl;
+    audio.src = `/api/media/voice_profiles/${voiceKey}/reference.wav`;
     audio.play().catch(() => {});
-    setPlayingShot(shotId);
-    setPlayingProfile(null);
-  }, [playingShot]);
+    setPlayingVoice(voiceKey);
+  }, [playingVoice]);
 
-  // Handle audio ending
+  const handleTestVoice = useCallback(async (voice: VoiceEntry) => {
+    setTestingVoice(voice.key);
+    try {
+      const res = await fetch("/api/voices/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: voice.sampleText, voiceKey: voice.key }),
+      });
+      const data = await res.json() as { audioUrl?: string; error?: string };
+      if (data.audioUrl && audioRef.current) {
+        audioRef.current.src = data.audioUrl;
+        audioRef.current.play().catch(() => {});
+        setPlayingVoice(voice.key);
+      }
+    } catch { /* ignore */ }
+    setTestingVoice(null);
+  }, []);
+
+  const handleSetQuality = useCallback(async (voiceKey: string, quality: string) => {
+    setUpdatingQuality(voiceKey);
+    try {
+      await fetch("/api/voices", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: voiceKey, quality }),
+      });
+      // Update local state immediately
+      setLibrary((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          voices: prev.voices.map((v) =>
+            v.key === voiceKey ? { ...v, quality } : v
+          ),
+        };
+      });
+    } catch { /* ignore */ }
+    setUpdatingQuality(null);
+  }, []);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onEnded = () => {
-      setPlayingProfile(null);
-      setPlayingShot(null);
-    };
+    const onEnded = () => setPlayingVoice(null);
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
   }, []);
 
-  const profiles = voices?.profiles ?? [];
-  const assignments = voices?.assignments ?? [];
-  const withAudio = assignments.filter((a) => a.has_audio).length;
-  const audioPct = assignments.length > 0 ? Math.round((withAudio / assignments.length) * 100) : 0;
+  if (!library) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AudioWaveform size={32} className="text-cyan mx-auto mb-3 animate-pulse" />
+          <p className="text-sm text-muted">Loading voice library...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const filteredAssignments = useMemo(() => {
-    return assignments.filter((a) => {
-      if (searchQuery && !a.shot_id.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          !a.voice_actor.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      if (filter === "has_audio") return a.has_audio;
-      if (filter === "missing") return !a.has_audio;
-      return true;
-    });
-  }, [assignments, filter, searchQuery]);
-
-  const sceneStats = useMemo(() => {
-    const map = new Map<string, { total: number; done: number }>();
-    for (const a of assignments) {
-      const s = map.get(a.scene_id) ?? { total: 0, done: 0 };
-      s.total++;
-      if (a.has_audio) s.done++;
-      map.set(a.scene_id, s);
-    }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [assignments]);
-
-  if (!voices) return <VoicesSkeleton />;
+  const clipCount = voices.filter((v) => v.hasReference).length;
+  const qualityCounts = {
+    pending: voices.filter((v) => v.quality === "pending").length,
+    good: voices.filter((v) => v.quality === "good").length,
+    replace: voices.filter((v) => v.quality === "replace").length,
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Shared audio element for playback */}
       <audio ref={audioRef} className="sr-only" preload="none" />
 
       {/* Header */}
@@ -142,154 +239,106 @@ export default function VoicesPage() {
         <div>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <AudioWaveform size={20} className="text-cyan" />
-            Voice Lab
+            Voice Library
           </h1>
           <p className="text-sm text-muted mt-1">
-            {assignments.length} assignments &middot; {profiles.length} voice profiles
+            {voices.length} voices &middot; {clipCount} clips ready &middot; Default: {library.defaultVoice}
           </p>
         </div>
+        <button
+          onClick={fetchVoices}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted hover:text-white hover:bg-white/[0.08] transition-colors border border-white/[0.06]"
+        >
+          <RefreshCw size={11} />
+          Refresh
+        </button>
       </div>
 
-      {/* Overall Progress */}
-      <div className="glass glow-cyan p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan/10">
-              <Mic size={20} className="text-cyan" />
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: "Total Voices", value: voices.length, color: "#00d4ff", icon: AudioWaveform },
+          { label: "Clips Ready", value: clipCount, color: "#c8ff00", icon: FileAudio },
+          { label: "Approved", value: qualityCounts.good, color: "#22c55e", icon: ThumbsUp },
+          { label: "Needs Replace", value: qualityCounts.replace, color: "#ef4444", icon: ThumbsDown },
+        ].map((s) => (
+          <div key={s.label} className="glass p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}15` }}>
+              <s.icon size={16} style={{ color: s.color }} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">Audio Generation Progress</p>
-              <p className="text-xs text-muted">{withAudio} of {assignments.length} narrations generated</p>
+              <span className="text-lg font-bold text-white">{s.value}</span>
+              <p className="text-[10px] text-muted">{s.label}</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-cyan number-pop">{audioPct}%</p>
-          </div>
+        ))}
+      </div>
+
+      {/* Progress bar — clips downloaded */}
+      <div className="glass p-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs text-muted">Reference Clips Progress</span>
+          <span className="text-xs font-mono text-white">{clipCount}/{voices.length}</span>
         </div>
-        <div className="progress-bar h-2">
-          <div className="progress-fill" style={{ width: `${audioPct}%`, background: "#00d4ff" }} />
+        <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${(clipCount / Math.max(voices.length, 1)) * 100}%`,
+              background: "linear-gradient(90deg, #c8ff00, #22c55e)",
+            }}
+          />
         </div>
       </div>
 
-      {/* Narrator info */}
-      {voices?.narrator_voice && (
-        <div className="glass p-4 flex items-center gap-3">
-          <Volume2 size={16} className="text-cyan" />
-          <span className="text-sm text-white">Primary Narrator:</span>
-          <code className="text-sm font-mono text-cyan bg-cyan/[0.08] px-2 py-0.5 rounded">{voices.narrator_voice}</code>
-        </div>
-      )}
-
-      {/* Voice Profiles */}
-      <div className="glass p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <User size={14} className="text-amber" />
-          <h3 className="text-sm font-semibold text-white section-heading">Voice Profiles</h3>
-          <span className="text-[10px] text-muted">{profiles.length} profiles</span>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {profiles.map((profile) => {
-            const shotsDone = assignments.filter((a) => a.voice_actor === profile.key && a.has_audio).length;
-            const pct = profile.shot_count > 0 ? Math.round((shotsDone / profile.shot_count) * 100) : 0;
-            const isPlaying = playingProfile === profile.key;
-            return (
-              <div key={profile.key} className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all hover-lift">
-                <div className="flex items-center gap-3 mb-3">
-                  <button
-                    onClick={() => toggleProfileAudio(profile.key)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all hover:scale-105"
-                    style={{ background: `${profile.color}15` }}
-                  >
-                    {isPlaying ? (
-                      <Pause size={16} style={{ color: profile.color }} />
-                    ) : (
-                      <Play size={14} className="ml-0.5" style={{ color: profile.color }} />
-                    )}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{profile.name}</p>
-                    <p className="text-[10px] text-muted">{profile.label}</p>
-                  </div>
-                  {profile.has_reference ? (
-                    <span className="flex items-center gap-1 text-[10px] text-success">
-                      <CheckCircle2 size={10} /> Ref
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-[10px] text-muted">
-                      <XCircle size={10} /> No ref
-                    </span>
-                  )}
-                </div>
-                {/* Waveform visualization */}
-                <div className="mb-3 rounded-lg bg-black/20 px-3 py-2">
-                  <WaveformBar color={profile.color} playing={isPlaying} />
-                </div>
-                <div className="mb-2">
-                  <div className="flex justify-between text-[10px] mb-1">
-                    <span className="text-muted">{shotsDone}/{profile.shot_count} shots</span>
-                    <span style={{ color: profile.color }}>{pct}%</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${pct}%`, background: profile.color }} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {/* Category Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {(Object.keys(CATEGORY_LABELS) as CategoryKey[]).map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategory(cat)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
+              category === cat
+                ? "bg-white/10 text-white border-white/20"
+                : "bg-white/[0.02] text-muted border-white/[0.06] hover:bg-white/[0.05]"
+            }`}
+          >
+            {CATEGORY_LABELS[cat]}
+            <span className="ml-1.5 text-[10px] opacity-60">{categoryCounts[cat] ?? 0}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Scene Audio Coverage */}
-      <div className="glass p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Mic size={14} className="text-success" />
-          <h3 className="text-sm font-semibold text-white section-heading">Scene Audio Coverage</h3>
+      {/* Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Globe size={12} className="text-muted" />
+          <select
+            value={languageFilter}
+            onChange={(e) => setLanguageFilter(e.target.value)}
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-xs text-white outline-none"
+          >
+            {languages.map((lang) => (
+              <option key={lang} value={lang}>
+                {lang === "all" ? "All Languages" : LANGUAGE_FLAGS[lang] ?? lang.toUpperCase()}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-          {sceneStats.map(([sceneId, { total, done }]) => {
-            const pct = Math.round((done / total) * 100);
-            const color = getSceneColor(sceneId);
-            const r = 14;
-            const circ = 2 * Math.PI * r;
-            const offset = circ - (pct / 100) * circ;
-            return (
-              <div key={sceneId} className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/[0.02] transition-colors hover-lift cursor-pointer">
-                <div className="relative">
-                  <svg width="40" height="40" viewBox="0 0 40 40">
-                    <circle cx="20" cy="20" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" />
-                    <circle
-                      cx="20" cy="20" r={r} fill="none"
-                      stroke={color} strokeWidth="2.5"
-                      strokeDasharray={circ} strokeDashoffset={offset}
-                      strokeLinecap="round"
-                      style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%", transition: "stroke-dashoffset 0.8s ease" }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[9px] font-bold text-white">{done}/{total}</span>
-                  </div>
-                </div>
-                <span className="text-[9px] text-muted font-mono">{sceneId.replace("P1_", "")}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Assignments Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex rounded-lg bg-white/[0.04] border border-white/[0.06] p-0.5">
-          {(["all", "has_audio", "missing"] as VoiceFilter[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-                filter === f ? "filter-active" : "text-muted hover:text-white"
-              }`}
-            >
-              {f === "all" ? "All" : f === "has_audio" ? "Generated" : "Missing"}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <Filter size={12} className="text-muted" />
+          <select
+            value={qualityFilter}
+            onChange={(e) => setQualityFilter(e.target.value as QualityFilter)}
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-xs text-white outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="has_clip">Has Clip</option>
+            <option value="no_clip">No Clip</option>
+            <option value="pending">Pending Review</option>
+            <option value="good">Approved</option>
+            <option value="replace">Needs Replace</option>
+          </select>
         </div>
         <div className="relative ml-auto">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
@@ -297,79 +346,155 @@ export default function VoicesPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search shots..."
-            className="bg-white/[0.04] border border-white/[0.08] rounded-lg pl-7 pr-3 py-2 text-xs text-white outline-none placeholder:text-muted w-44"
+            placeholder="Search voices, tags..."
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg pl-7 pr-3 py-2 text-xs text-white outline-none placeholder:text-muted w-52"
           />
         </div>
       </div>
 
-      {/* Assignments Table */}
-      <div className="glass p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Mic size={14} className="text-cyan" />
-          <h3 className="text-sm font-semibold text-white section-heading">Voice Assignments</h3>
-          <span className="text-[10px] text-muted ml-auto">{filteredAssignments.length} shown</span>
-        </div>
-        <div className="space-y-1 max-h-[500px] overflow-y-auto stagger-list">
-          {filteredAssignments.map((a) => {
-            const profile = profiles.find((p) => p.key === a.voice_actor);
-            const sceneColor = getSceneColor(a.scene_id);
-            const isShotPlaying = playingShot === a.shot_id;
-            return (
-              <div key={a.shot_id} className="flex items-center gap-4 rounded-xl bg-white/[0.02] px-4 py-2.5 hover:bg-white/[0.04] transition-all row-hover">
-                <div className="h-2 w-2 rounded-full shrink-0" style={{ background: sceneColor }} />
-                <code className="w-24 text-xs font-mono text-cyan shrink-0">{a.shot_id}</code>
-                <span className="w-16 text-xs text-muted shrink-0">{a.scene_id}</span>
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {profile && (
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: profile.color }} />
-                      <span className="text-xs text-white truncate">{profile.name}</span>
-                    </div>
+      {/* Voice Grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredVoices.map((voice) => {
+          const color = CATEGORY_COLORS[voice.category] ?? "#94a3b8";
+          const isPlaying = playingVoice === voice.key;
+          const isTesting = testingVoice === voice.key;
+          const isDefault = voice.key === library.defaultVoice;
+          const hasClip = voice.hasReference;
+
+          return (
+            <div
+              key={voice.key}
+              className={`rounded-xl bg-white/[0.03] border p-4 hover:bg-white/[0.05] transition-all hover-lift ${
+                isDefault ? "border-cyan/30" : "border-white/[0.06] hover:border-white/[0.1]"
+              }`}
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-3">
+                <button
+                  onClick={() => hasClip && togglePlayback(voice.key)}
+                  disabled={!hasClip}
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all ${hasClip ? "hover:scale-105" : "opacity-30 cursor-not-allowed"}`}
+                  style={{ background: `${color}15` }}
+                  title={hasClip ? "Play reference clip" : "No reference clip yet"}
+                >
+                  {isPlaying ? (
+                    <Pause size={14} style={{ color }} />
+                  ) : hasClip ? (
+                    <Play size={12} className="ml-0.5" style={{ color }} />
+                  ) : (
+                    <Download size={12} style={{ color }} />
                   )}
-                </div>
-                {a.characters.length > 0 && (
-                  <span className="text-[10px] text-muted truncate max-w-[120px] hidden sm:block">{a.characters.join(", ")}</span>
-                )}
-                {a.has_audio ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => toggleShotAudio(a.shot_id)}
-                      className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
-                      title={isShotPlaying ? "Stop" : "Play audio"}
-                    >
-                      {isShotPlaying ? (
-                        <Pause size={10} className="text-cyan" />
-                      ) : (
-                        <Play size={10} className="text-success ml-px" />
-                      )}
-                    </button>
-                    <div className="hidden sm:flex items-end gap-[1px] h-3">
-                      {Array.from({ length: 5 }, (_, j) => (
-                        <div
-                          key={j}
-                          className={`w-[2px] rounded-full ${isShotPlaying ? "bg-cyan/80 waveform-active" : "bg-success/50"}`}
-                          style={{ height: `${30 + Math.sin(j * 1.5) * 40 + 30}%` }}
-                        />
-                      ))}
-                    </div>
-                    <span className="flex items-center gap-1 text-[10px] text-success font-semibold">
-                      <CheckCircle2 size={12} /> Done
-                    </span>
+                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-white truncate">{voice.name}</p>
+                    {isDefault && (
+                      <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-cyan/20 text-cyan font-bold shrink-0">DEFAULT</span>
+                    )}
                   </div>
-                ) : (
-                  <span className="flex items-center gap-1 text-[10px] text-white/20">
-                    <XCircle size={12} /> Pending
+                  <p className="text-[10px] text-muted truncate">
+                    {CATEGORY_LABELS[voice.category]?.replace(/^(Western|East Asian|South Asian|Movie)\s*/, "") ?? voice.category}
+                    {voice.accent && ` · ${voice.accent}`}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  {/* Clip status indicator */}
+                  {hasClip ? (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#c8ff00]/15 text-[#c8ff00] font-mono flex items-center gap-0.5">
+                      <FileAudio size={8} /> clip
+                    </span>
+                  ) : (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.04] text-muted font-mono">
+                      no clip
+                    </span>
+                  )}
+                  <span className="text-[9px] text-muted font-mono">
+                    {LANGUAGE_FLAGS[voice.language] ?? voice.language}
                   </span>
+                </div>
+              </div>
+
+              {/* Waveform */}
+              <div className="mb-3 rounded-lg bg-black/20 px-2 py-1.5">
+                <WaveformBar color={color} playing={isPlaying} />
+              </div>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1 mb-3">
+                {voice.tags.slice(0, 4).map((tag) => (
+                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/[0.04] text-muted">
+                    {tag}
+                  </span>
+                ))}
+                {voice.tags.length > 4 && (
+                  <span className="text-[9px] text-muted">+{voice.tags.length - 4}</span>
                 )}
               </div>
-            );
-          })}
-          {filteredAssignments.length === 0 && (
-            <div className="py-8 text-center text-sm text-muted">No assignments match the current filter</div>
-          )}
-        </div>
+
+              {/* Quality review + actions */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/[0.04] text-muted font-mono">
+                    {voice.engine}
+                  </span>
+                  {/* Quality badge */}
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-mono" style={{
+                    background: `${QUALITY_COLORS[voice.quality] ?? "#6b7280"}20`,
+                    color: QUALITY_COLORS[voice.quality] ?? "#6b7280",
+                  }}>
+                    {voice.quality}
+                  </span>
+                </div>
+
+                {/* Review buttons — only show when clip exists */}
+                {hasClip ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleSetQuality(voice.key, "good")}
+                      disabled={updatingQuality === voice.key || voice.quality === "good"}
+                      className={`p-1 rounded-md transition-colors ${
+                        voice.quality === "good"
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-white/[0.04] text-muted hover:bg-green-500/15 hover:text-green-400"
+                      }`}
+                      title="Mark as good"
+                    >
+                      <ThumbsUp size={11} />
+                    </button>
+                    <button
+                      onClick={() => handleSetQuality(voice.key, "replace")}
+                      disabled={updatingQuality === voice.key || voice.quality === "replace"}
+                      className={`p-1 rounded-md transition-colors ${
+                        voice.quality === "replace"
+                          ? "bg-red-500/20 text-red-400"
+                          : "bg-white/[0.04] text-muted hover:bg-red-500/15 hover:text-red-400"
+                      }`}
+                      title="Mark for replacement"
+                    >
+                      <ThumbsDown size={11} />
+                    </button>
+                    <button
+                      onClick={() => togglePlayback(voice.key)}
+                      className="p-1 rounded-md bg-cyan/10 text-cyan hover:bg-cyan/20 transition-colors"
+                      title="Play reference"
+                    >
+                      {isPlaying ? <Pause size={11} /> : <Volume2 size={11} />}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[9px] text-muted italic">downloading...</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {filteredVoices.length === 0 && (
+        <div className="py-12 text-center text-sm text-muted">
+          No voices match the current filters
+        </div>
+      )}
     </div>
   );
 }

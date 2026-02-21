@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { stat, open } from "node:fs/promises";
 import path from "node:path";
 
-const OUTPUT_DIR = "C:\\Users\\deepc\\film-pipeline\\output";
-const VOICE_PROFILES_DIR = "C:\\Users\\deepc\\film-pipeline\\voice_profiles";
+const OUTPUT_DIR = path.resolve(process.cwd(), "automation", "output");
+const AUTOMATION_OUTPUT_DIR = path.resolve(process.cwd(), "automation", "output");
+const VOICE_PROFILES_DIR = path.resolve(process.cwd(), "automation", "voice-library");
+const VOICE_SAMPLES_DIR = path.resolve(process.cwd(), "automation", "voice-library", "generated");
 
 const MIME_MAP: Record<string, string> = {
   ".mp4": "video/mp4",
@@ -11,6 +13,10 @@ const MIME_MAP: Record<string, string> = {
   ".wav": "audio/wav",
   ".mp3": "audio/mpeg",
   ".ogg": "audio/ogg",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
 };
 
 export async function GET(
@@ -20,10 +26,24 @@ export async function GET(
   const segments = (await params).path;
   const relativePath = segments.join("/");
 
-  // voice_profiles/* routes to the voice profiles directory
+  // Route to the correct base directory
   const isVoiceProfile = relativePath.startsWith("voice_profiles/");
-  const baseDir = isVoiceProfile ? VOICE_PROFILES_DIR : OUTPUT_DIR;
-  const resolvedRelative = isVoiceProfile ? relativePath.replace("voice_profiles/", "") : relativePath;
+  const isVoiceSample = relativePath.startsWith("voice_samples/");
+  const isAutomation = relativePath.startsWith("automation/");
+  const baseDir = isVoiceProfile
+    ? VOICE_PROFILES_DIR
+    : isVoiceSample
+      ? VOICE_SAMPLES_DIR
+      : isAutomation
+        ? AUTOMATION_OUTPUT_DIR
+        : OUTPUT_DIR;
+  const resolvedRelative = isVoiceProfile
+    ? relativePath.replace("voice_profiles/", "references/")
+    : isVoiceSample
+      ? relativePath.replace("voice_samples/", "")
+      : isAutomation
+        ? relativePath.replace("automation/", "")
+        : relativePath;
 
   // Security: prevent path traversal
   const filePath = path.resolve(baseDir, resolvedRelative);

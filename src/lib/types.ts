@@ -193,6 +193,134 @@ export interface VoiceData {
   samples: string[];
 }
 
+// ── Automation Pipeline ────────────────────────────────────────
+
+export type AutomationShotStatus =
+  | "pending"
+  | "generating_image"
+  | "assessing_image"
+  | "retrying_image"
+  | "generating_video"
+  | "assessing_video"
+  | "retrying_video"
+  | "downloading"
+  | "completed"
+  | "failed"
+  | "paused_for_credits"
+  | "skipped";
+
+export type AutomationServiceState = "idle" | "running" | "paused" | "stopped" | "error";
+
+export interface AutomationQualityAssessment {
+  score: number;
+  reasoning: string;
+  timestamp: string;
+  attempt: number;
+}
+
+export interface AutomationQueueItem {
+  shotId: string;
+  sceneId: string;
+  partNumber: number;
+  status: AutomationShotStatus;
+  prompt: string;
+  motionPrompt: string;
+  imageModel: string;
+  videoModel: string;
+  requiresCredits: boolean;
+  imageQuality: AutomationQualityAssessment | null;
+  videoQuality: AutomationQualityAssessment | null;
+  imageAttempts: number;
+  videoAttempts: number;
+  outputImagePath: string | null;
+  outputVideoPath: string | null;
+  error: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
+export interface AutomationQueueStats {
+  total: number;
+  pending: number;
+  completed: number;
+  failed: number;
+  inProgress: number;
+  pausedForCredits: number;
+  skipped: number;
+}
+
+export interface AutomationServiceStatus {
+  state: AutomationServiceState;
+  currentShot: string | null;
+  currentStep: string | null;
+  queueStats: AutomationQueueStats;
+  ollamaConnected: boolean;
+  browserConnected: boolean;
+  startedAt: string | null;
+  lastActivity: string | null;
+  uptime: number;
+  errors: string[];
+}
+
+export interface AutomationEvent {
+  id: string;
+  type: string;
+  shotId: string | null;
+  message: string;
+  details: Record<string, unknown>;
+  timestamp: string;
+}
+
+// ── Queue Editor ────────────────────────────────────────────────
+
+export interface CameraConfig {
+  sensor: string;
+  lens: string;
+  focalLength: string;
+  aperture: string;
+  movement: string;
+  genre: string;
+}
+
+export interface QueueEditorItem {
+  shotId: string;
+  sceneId: string;
+  partNumber: number;
+  status: AutomationShotStatus;
+  prompt: string;
+  motionPrompt: string;
+  camera: CameraConfig;
+  imageModel: string;
+  videoModels: string[];
+  videoModel: string;
+  durationSec: number;
+  startFramePath: string;
+  endFramePath: string;
+  requiresCredits: boolean;
+  imageQuality: AutomationQualityAssessment | null;
+  videoQuality: AutomationQualityAssessment | null;
+  imageAttempts: number;
+  videoAttempts: number;
+  outputImagePath: string | null;
+  outputVideoPath: string | null;
+  error: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
+export interface ParsedMdShot {
+  shotNumber: number;
+  shotId: string;
+  durationSec: number;
+  imagePrompt: string;
+  motionPrompt: string;
+  camera: CameraConfig;
+  models: string[];
+  finalModel: string;
+}
+
 // ── API Wrapper ─────────────────────────────────────────────────
 
 export interface ApiResponse<T> {

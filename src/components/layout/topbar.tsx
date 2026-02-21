@@ -27,6 +27,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/clips": "Clips",
   "/storyboard": "Storyboard",
   "/voices": "Voice Lab",
+  "/production": "Production",
+  "/queue": "Queue Editor",
   "/logs": "Logs",
   "/compose": "Compose",
   "/settings": "Settings",

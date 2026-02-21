@@ -55,11 +55,6 @@ body {
   border-radius: 12px;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.glass-hover:hover {
-  background: rgba(255,255,255,0.07);
-  border-color: rgba(255,255,255,0.15);
-}
-
 /* ── Glow Effects ──────────────────────────────────── */
 .glow-cyan { box-shadow: 0 0 20px rgba(0,212,255,0.15), inset 0 0 20px rgba(0,212,255,0.03); }
 .glow-amber { box-shadow: 0 0 20px rgba(255,107,53,0.15), inset 0 0 20px rgba(255,107,53,0.03); }
@@ -482,13 +477,6 @@ main > * {
 .waveform-active {
   animation: waveformBounce ease-in-out infinite alternate;
 }
-
-/* ── Scene Colors ──────────────────────────────────── */
-.mood-oppressive { color: #8b5cf6; }
-.mood-tension { color: #ef4444; }
-.mood-hope { color: #eab308; }
-.mood-rebellion { color: #ff6b35; }
-.mood-neutral { color: #94a3b8; }
 
 /* ── Button Press Feedback ───────────────────────── */
 button:active:not(:disabled) {

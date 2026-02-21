@@ -34,8 +34,16 @@ function buildMiniPlayerClip(clip: Clip): MiniPlayerClip {
   };
 }
 
-function clipVideoUrl(clip: Clip): string | null {
+function clipVideoUrl(clip: Clip, preferV1 = false): string | null {
+  if (preferV1 && clip.v1_clip?.relative_path) {
+    return getVideoUrl(clip.v1_clip.relative_path);
+  }
   return clip.clip?.relative_path ? getVideoUrl(clip.clip.relative_path) : null;
+}
+
+function clipDisplaySource(clip: Clip, preferV1 = false): string | undefined {
+  if (preferV1 && clip.v1_clip) return "v1";
+  return clip.clip?.source;
 }
 
 function FilmTimeline({ clips }: { clips: Clip[] }) {
@@ -68,6 +76,7 @@ function ShotDrawer({
   onNavigate,
   onCompare,
   onPlay,
+  preferV1 = false,
 }: {
   clip: Clip;
   clips: Clip[];
@@ -76,6 +85,7 @@ function ShotDrawer({
   onNavigate: (shotId: string) => void;
   onCompare: (shotId: string) => void;
   onPlay: (clip: Clip) => void;
+  preferV1?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -127,11 +137,11 @@ function ShotDrawer({
           <div className="flex items-center gap-3">
             <div className="h-3 w-3 rounded-full" style={{ background: sceneColor }} />
             <h2 className="text-lg font-bold text-white">{clip.shot_id}</h2>
-            {clip.clip?.source && (
-              <span className={`badge ${clip.clip.source === "v2" ? "badge-v2" : "badge-v1"}`}>
-                {clip.clip.source === "v2" ? "V2" : "V1"}
+            {(() => { const s = clipDisplaySource(clip, preferV1); return s ? (
+              <span className={`badge ${s === "v2" ? "badge-v2" : "badge-v1"}`}>
+                {s === "v2" ? "V2" : "V1"}
               </span>
-            )}
+            ) : null; })()}
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-muted hover:text-white transition-colors">
             <X size={18} />
@@ -140,10 +150,10 @@ function ShotDrawer({
 
         {/* Video preview */}
         <div className="aspect-video rounded-xl bg-black border border-white/[0.06] flex items-center justify-center relative group/video overflow-hidden">
-          {clipVideoUrl(clip) ? (
+          {clipVideoUrl(clip, preferV1) ? (
             <video
               ref={videoRef}
-              src={clipVideoUrl(clip)!}
+              src={clipVideoUrl(clip, preferV1)!}
               muted
               loop
               playsInline
@@ -154,7 +164,7 @@ function ShotDrawer({
           ) : (
             <Film size={32} className="text-white/10" />
           )}
-          {clip.has_clip && clipVideoUrl(clip) && (
+          {clip.has_clip && clipVideoUrl(clip, preferV1) && (
             <button
               onClick={togglePlay}
               className={`absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity ${playing ? "opacity-0 hover:opacity-100" : "opacity-0 group-hover/video:opacity-100"}`}
@@ -199,8 +209,8 @@ function ShotDrawer({
             label="Status"
             value={clip.has_clip ? (clip.has_composite ? "Composited" : "Has Video") : "Missing"}
           />
-          <MetaItem label="Source" value={clip.clip?.source === "v2" ? "V2 Enhanced" : clip.clip?.source ?? "N/A"} />
-          <MetaItem label="File Size" value={clip.clip ? `${clip.clip.size_kb.toFixed(0)} KB` : "N/A"} />
+          <MetaItem label="Source" value={(() => { const s = clipDisplaySource(clip, preferV1); return s === "v2" ? "V2 Enhanced" : s === "v1" ? "V1 Standard" : "N/A"; })()} />
+          <MetaItem label="File Size" value={(() => { const c = preferV1 && clip.v1_clip ? clip.v1_clip : clip.clip; return c ? `${c.size_kb.toFixed(0)} KB` : "N/A"; })()} />
         </div>
 
         {/* Storyboard data */}
@@ -247,12 +257,14 @@ function CinemaModal({
   storyboardShot,
   onClose,
   onNavigate,
+  preferV1 = false,
 }: {
   clip: Clip;
   clips: Clip[];
   storyboardShot: Shot | null;
   onClose: () => void;
   onNavigate: (shotId: string) => void;
+  preferV1?: boolean;
 }) {
   const currentIndex = clips.findIndex((c) => c.shot_id === clip.shot_id);
   const hasPrev = currentIndex > 0;
@@ -288,9 +300,9 @@ function CinemaModal({
         <div className="rounded-2xl overflow-hidden border border-white/[0.08] bg-black">
           {/* Video area */}
           <div className="aspect-video bg-black flex items-center justify-center relative">
-            {clipVideoUrl(clip) ? (
+            {clipVideoUrl(clip, preferV1) ? (
               <video
-                src={clipVideoUrl(clip)!}
+                src={clipVideoUrl(clip, preferV1)!}
                 controls
                 autoPlay
                 muted
@@ -332,11 +344,11 @@ function CinemaModal({
             {/* Badge */}
             <div className="absolute top-4 left-4 flex items-center gap-2">
               <div className="h-3 w-3 rounded-full" style={{ background: sceneColor }} />
-              {clip.clip?.source && (
-                <span className={`badge ${clip.clip.source === "v2" ? "badge-v2" : "badge-v1"}`}>
-                  {clip.clip.source === "v2" ? "V2 Enhanced" : "V1 Standard"}
+              {(() => { const s = clipDisplaySource(clip, preferV1); return s ? (
+                <span className={`badge ${s === "v2" ? "badge-v2" : "badge-v1"}`}>
+                  {s === "v2" ? "V2 Enhanced" : "V1 Standard"}
                 </span>
-              )}
+              ) : null; })()}
             </div>
 
             {/* Counter */}
@@ -411,15 +423,17 @@ function MetaItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ClipCard({ clip, onClick, onCinema }: { clip: Clip; onClick: () => void; onCinema: () => void }) {
+function ClipCard({ clip, onClick, onCinema, preferV1 = false }: { clip: Clip; onClick: () => void; onCinema: () => void; preferV1?: boolean }) {
   const sceneColor = getSceneColor(clip.scene_id);
+  const videoUrl = clipVideoUrl(clip, preferV1);
+  const source = clipDisplaySource(clip, preferV1);
   return (
     <div className="clip-card glass p-4 group" onClick={onClick}>
       {/* Thumbnail */}
       <div className="relative aspect-video rounded-lg bg-black mb-3 overflow-hidden flex items-center justify-center">
-        {clipVideoUrl(clip) ? (
+        {videoUrl ? (
           <video
-            src={clipVideoUrl(clip)!}
+            src={videoUrl}
             muted
             playsInline
             preload="metadata"
@@ -432,9 +446,9 @@ function ClipCard({ clip, onClick, onCinema }: { clip: Clip; onClick: () => void
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         )}
         <div className="absolute top-2 right-2 flex gap-1">
-          {clip.clip?.source && (
-            <span className={`badge ${clip.clip.source === "v2" ? "badge-v2" : "badge-v1"}`}>
-              {clip.clip.source === "v2" ? "V2" : "V1"}
+          {source && (
+            <span className={`badge ${source === "v2" ? "badge-v2" : "badge-v1"}`}>
+              {source === "v2" ? "V2" : "V1"}
             </span>
           )}
         </div>
@@ -473,8 +487,10 @@ function ClipCard({ clip, onClick, onCinema }: { clip: Clip; onClick: () => void
   );
 }
 
-function ClipRow({ clip, onClick }: { clip: Clip; onClick: () => void }) {
+function ClipRow({ clip, onClick, preferV1 = false }: { clip: Clip; onClick: () => void; preferV1?: boolean }) {
   const sceneColor = getSceneColor(clip.scene_id);
+  const source = clipDisplaySource(clip, preferV1);
+  const displayClip = preferV1 && clip.v1_clip ? clip.v1_clip : clip.clip;
   return (
     <div
       className="flex items-center gap-4 rounded-lg bg-white/[0.02] px-4 py-3 hover:bg-white/[0.04] transition-colors cursor-pointer row-hover"
@@ -495,19 +511,19 @@ function ClipRow({ clip, onClick }: { clip: Clip; onClick: () => void }) {
         </span>
       </div>
       <span className="text-xs text-muted font-mono">
-        {clip.clip ? `${clip.clip.size_kb.toFixed(0)} KB` : "--"}
+        {displayClip ? `${displayClip.size_kb.toFixed(0)} KB` : "--"}
       </span>
-      {clip.clip?.source && (
-        <span className={`badge ${clip.clip.source === "v2" ? "badge-v2" : "badge-v1"}`}>
-          {clip.clip.source === "v2" ? "V2" : "V1"}
+      {source && (
+        <span className={`badge ${source === "v2" ? "badge-v2" : "badge-v1"}`}>
+          {source === "v2" ? "V2" : "V1"}
         </span>
       )}
     </div>
   );
 }
 
-function ClipMosaicItem({ clip, selected, onSelect, onClick }: {
-  clip: Clip; selected: boolean; onSelect: (shotId: string) => void; onClick: () => void;
+function ClipMosaicItem({ clip, selected, onSelect, onClick, preferV1 = false }: {
+  clip: Clip; selected: boolean; onSelect: (shotId: string) => void; onClick: () => void; preferV1?: boolean;
 }) {
   const sceneColor = getSceneColor(clip.scene_id);
   return (
@@ -550,9 +566,11 @@ function ClipMosaicItem({ clip, selected, onSelect, onClick }: {
       </div>
 
       {/* Source badge */}
-      {clip.clip?.source === "v2" && (
+      {clipDisplaySource(clip, preferV1) && (
         <div className="absolute top-1 right-1">
-          <span className="text-[7px] font-bold text-amber bg-amber/20 rounded px-1">V2</span>
+          <span className={`text-[7px] font-bold rounded px-1 ${clipDisplaySource(clip, preferV1) === "v2" ? "text-amber bg-amber/20" : "text-cyan bg-cyan/20"}`}>
+            {clipDisplaySource(clip, preferV1) === "v2" ? "V2" : "V1"}
+          </span>
         </div>
       )}
 
@@ -803,6 +821,7 @@ export default function ClipsPage() {
               clip={clip}
               onClick={() => setSelectedShotId(clip.shot_id)}
               onCinema={() => setCinemaShotId(clip.shot_id)}
+              preferV1={sourceFilter === "v1"}
             />
           ))}
         </div>
@@ -815,13 +834,14 @@ export default function ClipsPage() {
               selected={selectedShots.has(clip.shot_id)}
               onSelect={toggleSelect}
               onClick={() => setSelectedShotId(clip.shot_id)}
+              preferV1={sourceFilter === "v1"}
             />
           ))}
         </div>
       ) : (
         <div className="glass p-2 space-y-1">
           {filtered.map((clip) => (
-            <ClipRow key={clip.shot_id} clip={clip} onClick={() => setSelectedShotId(clip.shot_id)} />
+            <ClipRow key={clip.shot_id} clip={clip} onClick={() => setSelectedShotId(clip.shot_id)} preferV1={sourceFilter === "v1"} />
           ))}
         </div>
       )}
@@ -846,6 +866,7 @@ export default function ClipsPage() {
             const playlist = filtered.filter((f) => f.has_clip).map(buildMiniPlayerClip);
             miniPlayer.open(buildMiniPlayerClip(c), playlist);
           }}
+          preferV1={sourceFilter === "v1"}
         />
       )}
 
@@ -857,6 +878,7 @@ export default function ClipsPage() {
           storyboardShot={shotLookup.get(cinemaClip.shot_id) ?? null}
           onClose={handleCinemaClose}
           onNavigate={handleCinemaNavigate}
+          preferV1={sourceFilter === "v1"}
         />
       )}
 
