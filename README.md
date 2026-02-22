@@ -41,21 +41,22 @@
 
 ## Multi-Theme System
 
-Three distinct color themes switch automatically based on the dashboard section:
+Four color themes with WCAG AA-compliant contrast ratios (~6:1 for muted text):
 
-| Theme | Sections | Background | Accent |
+| Theme | Background | Accent | Muted Text Contrast |
 |---|---|---|---|
-| **Cool Navy** | Dashboard, Clips, Research, Settings, Storyboard, Voices | `#1f2435` | `#7dd3fc` |
-| **Warm Slate** | Gallery, Production, Queue, WhatsApp | `#2b2d3e` | `#89b4fa` |
-| **Soft Charcoal** | Distribution | `#2e3045` | `#c4b5fd` |
+| **Cool Navy** (default) | `#1f2435` | `#7dd3fc` | ~6.2:1 |
+| **Warm Slate** | `#2b2d3e` | `#89b4fa` | ~5.8:1 |
+| **Soft Charcoal** | `#2e3045` | `#c4b5fd` | ~5.8:1 |
+| **Light Mode** | `#f8fafc` | `#0284c7` | ~7.0:1 |
 
-Implemented via CSS custom properties with `[data-theme]` attribute overrides and a route-aware `ThemeProvider`. All colors use `var()` references — zero hardcoded hex values in components.
+Implemented via CSS custom properties with `[data-theme]` attribute overrides and a route-aware `ThemeProvider`. All colors use `var()` references — zero hardcoded hex values in components. SSE (Server-Sent Events) provides real-time updates for automation status, queue changes, and narration progress.
 
 ---
 
 ## Features
 
-### 18 Purpose-Built Pages
+### 20 Purpose-Built Pages
 
 | Page | Route | Description |
 |---|---|---|
@@ -75,15 +76,19 @@ Implemented via CSS custom properties with `[data-theme]` attribute overrides an
 | **Research Hub** | `/research` | Multi-platform research (X, Instagram, YouTube, TikTok, RSS) with content ranking |
 | **Distribution** | `/distribution` | Social posting hub with calendar, queue, per-platform pages |
 | **Orchestrate** | `/orchestrate` | AI pipeline control (Ollama-powered) |
-| **Settings** | `/settings` | Pipeline config, preferences, live design system preview |
+| **Analytics** | `/analytics` | Cross-pipeline analytics — platform distribution, model performance, voice usage, posting timeline |
+| **Settings** | `/settings` | Theme selection (4 themes), refresh interval, API health checks, thumbnail cache |
 | **Logs** | `/logs` | Pipeline log viewer with search and color-coded entries |
 
 ### Key Highlights
 
+- **WCAG AA Contrast** — all text meets 4.5:1 minimum contrast ratio across all 4 themes
+- **SSE Real-Time Updates** — Server-Sent Events for live automation status, queue changes, and narration progress
 - **V1/V2 Comparison Slider** — synchronized dual-video playback with drag-to-compare using CSS `clip-path: inset()`
 - **Mini Player** — persistent bottom-bar across all pages with playlist navigation, click-to-seek, built on Zustand
 - **Research Hub** — scrape trending content from X, Instagram, YouTube, TikTok; Ollama ranks by relevance/virality; one-click tweet composer
 - **Distribution Hub** — unified social media posting with calendar view, post queue, per-platform analytics
+- **Guided Onboarding** — interactive walkthrough for first-time users
 - **Command Palette** (`Ctrl+K`) — fuzzy search across pages and actions
 - **Keyboard Shortcuts** (`?` to view) — full keyboard navigation
 - **Floating Action Button** — radial menu with 8 quick actions
@@ -200,7 +205,8 @@ Screenplay → Storyboard JSON → Per-Shot Prompt Assembly
 | Voice profiles | 7 tested, 2 selected |
 | Audio narrations | 89 clips (76.6 MB) |
 | Custom animations | 60+ keyframes |
-| Dashboard pages | 18 |
+| Dashboard pages | 20 |
+| Color themes | 4 (WCAG AA compliant) |
 | TypeScript strict | Zero `any` types |
 
 ---

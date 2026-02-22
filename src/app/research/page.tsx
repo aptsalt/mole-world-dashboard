@@ -20,6 +20,9 @@ import {
 import Link from "next/link";
 import { clsx } from "clsx";
 import { getResearchFeed, getContentQueue } from "@/lib/api";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { SkeletonStatRow, SkeletonGrid, SkeletonList, SkeletonLine } from "@/components/ui/skeleton";
 import type { ResearchFeed, ResearchItem } from "@/components/research/research-types";
 
 interface ContentPost {
@@ -83,40 +86,65 @@ export default function ResearchDashboard() {
     Object.values(p.platforms).some((pl) => pl.postedAt),
   ).length;
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan/20 to-lime/20 flex items-center justify-center">
-          <TrendingUp size={20} className="text-cyan" />
+  if (loading) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        {/* Header skeleton */}
+        <div className="flex items-center gap-3">
+          <div className="skeleton w-10 h-10 rounded-xl" />
+          <div className="space-y-2">
+            <SkeletonLine className="w-36 h-5" />
+            <SkeletonLine className="w-64 h-3" />
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-white">Research Hub</h1>
-          <p className="text-xs text-muted">Multi-platform content research & tweet generation</p>
+        {/* Stats row */}
+        <SkeletonStatRow count={4} />
+        {/* Platform cards */}
+        <div className="space-y-3">
+          <SkeletonLine className="w-24 h-3" />
+          <SkeletonGrid count={4} cols={2} />
+        </div>
+        {/* Content pipeline */}
+        <div className="space-y-3">
+          <SkeletonLine className="w-32 h-3" />
+          <SkeletonList rows={4} />
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      {/* Header */}
+      <PageHeader
+        icon={TrendingUp}
+        iconBg="bg-gradient-to-br from-cyan/20 to-lime/20"
+        title="Research Hub"
+        subtitle="Multi-platform content research & tweet generation"
+      />
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
           { label: "Items Scraped", value: totalItems, icon: LayoutGrid, color: "text-cyan" },
           { label: "Selected", value: totalSelected, icon: CheckCircle2, color: "text-lime" },
           { label: "Generating", value: contentGenerating, icon: Loader2, color: "text-amber-400" },
           { label: "Posted", value: contentPosted, icon: Zap, color: "text-green-400" },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-bg-card/60 p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <stat.icon size={14} className={stat.color} />
-              <span className="text-[10px] text-muted uppercase tracking-wider">{stat.label}</span>
-            </div>
-            <span className="text-2xl font-bold text-white">{loading ? "-" : stat.value}</span>
-          </div>
+          <StatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+            loading={loading}
+          />
         ))}
       </div>
 
       {/* Platform Cards */}
       <section>
-        <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-text/80 uppercase tracking-wider mb-3">
           Platforms
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -142,7 +170,7 @@ export default function ResearchDashboard() {
                       <Icon size={16} className={p.color} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-white">{p.label}</h3>
+                      <h3 className="text-sm font-semibold text-text">{p.label}</h3>
                       <p className="text-[10px] text-muted">
                         {itemCount} items &middot; {lastFetched}
                       </p>
@@ -179,7 +207,7 @@ export default function ResearchDashboard() {
       {/* Content Pipeline */}
       {contentQueue.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-text/80 uppercase tracking-wider mb-3">
             Content Pipeline
           </h2>
           <div className="grid gap-2">
@@ -207,7 +235,7 @@ export default function ResearchDashboard() {
                       <span
                         key={platform}
                         className={clsx(
-                          "text-[9px] px-1.5 py-0.5 rounded-full",
+                          "text-[10px] px-1.5 py-0.5 rounded-full",
                           info.postedAt
                             ? "bg-green-500/20 text-green-400"
                             : info.enabled
@@ -228,7 +256,7 @@ export default function ResearchDashboard() {
 
       {/* Quick Links */}
       <section>
-        <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-text/80 uppercase tracking-wider mb-3">
           Quick Access
         </h2>
         <div className="flex gap-2 flex-wrap">

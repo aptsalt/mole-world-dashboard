@@ -321,6 +321,222 @@ export interface ParsedMdShot {
   finalModel: string;
 }
 
+// ── Content Platform Types ──────────────────────────────────────
+
+export type ContentPlatformStatus =
+  | "draft"
+  | "generating"
+  | "posted"
+  | "failed"
+  | "scheduled";
+
+export interface PlatformStatus {
+  enabled: boolean;
+  status: ContentPlatformStatus;
+  postedAt: string | null;
+  postUrl: string | null;
+}
+
+export interface ContentPost {
+  id: string;
+  storyTitle: string;
+  storyUrl?: string;
+  storySource: string;
+  caption: string;
+  narrationScript?: string;
+  imagePrompt?: string;
+  motionPrompt?: string;
+  imagePath: string;
+  videoPath: string | null;
+  platforms: Record<string, PlatformStatus>;
+  scheduledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Content Digest ─────────────────────────────────────────────
+
+export interface DigestStory {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  summary: string;
+  visualScore: number;
+  shareabilityScore: number;
+  rank: number;
+  contentStatus: string;
+  contentPostId: string | null;
+}
+
+export interface Digest {
+  id: string;
+  date: string;
+  stories: DigestStory[];
+  status: string;
+  fetchedAt: string;
+  sentAt: string | null;
+  selectedStories: number[];
+}
+
+export interface ContentDigest {
+  digest: Digest;
+}
+
+// ── WhatsApp Jobs ──────────────────────────────────────────────
+
+export interface WhatsAppJob {
+  id: string;
+  type: string;
+  description: string;
+  enhancedPrompt: string;
+  motionPrompt: string | null;
+  replyTo: string;
+  senderPhone: string;
+  status: string;
+  batchCount: number;
+  outputPaths: string[];
+  chatResponse: string | null;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+}
+
+// ── Narration ──────────────────────────────────────────────────
+
+export type NarrationMode = "auto" | "manual";
+
+export type NarrationStatus =
+  | "none"
+  | "script_ready"
+  | "generating_tts"
+  | "tts_ready"
+  | "composing"
+  | "composed";
+
+export interface NarrationJob {
+  id: string;
+  type: string;
+  description: string;
+  status: string;
+  voiceKey: string | null;
+  narrationMode: NarrationMode;
+  narrationScript: string | null;
+  narrationStatus: NarrationStatus;
+  narrationAudioPath: string | null;
+  narratedVideoPath: string | null;
+  audioSettings: { narrationVolume: number; fadeIn: number; fadeOut: number } | null;
+  outputPaths: string[];
+  shotPlans: { shotNumber: number; imagePrompt: string; motionPrompt: string }[] | null;
+  silentVideoPath: string | null;
+  silentVideoUrl: string | null;
+  silentVideoExists: boolean;
+  narrationAudioUrl: string | null;
+  narrationAudioExists: boolean;
+  narratedVideoUrl: string | null;
+  narratedVideoExists: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Orchestrate ────────────────────────────────────────────────
+
+export type JobStatus =
+  | "pending"
+  | "building_prompt"
+  | "building_content"
+  | "generating_image"
+  | "generating_video"
+  | "delivering"
+  | "completed"
+  | "failed";
+
+export interface OrchestrateJob {
+  id: string;
+  type: string;
+  description: string;
+  status: JobStatus;
+  pipeline: string;
+  source: string;
+  priority: number;
+  scheduledAt: string | null;
+  voiceKey: string | null;
+  imageModelAlias: string | null;
+  videoModelAlias: string | null;
+  narrationMode: NarrationMode;
+  outputPaths: string[];
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+}
+
+export interface OrchestrateModel {
+  alias: string;
+  name: string;
+  description: string;
+}
+
+export interface OrchestratePipelineInfo {
+  status: "idle" | "active" | "offline" | "error";
+  label: string;
+  activeJobs: number;
+}
+
+export interface OrchestrateStatusResponse {
+  pipelines: Record<string, OrchestratePipelineInfo>;
+  services: { worker: boolean; bridge: boolean; ollama: boolean };
+  jobStats: { total: number; pending: number; active: number; completed: number; failed: number };
+}
+
+export interface OrchestrateModelsResponse {
+  image: OrchestrateModel[];
+  video: OrchestrateModel[];
+  defaults: { image: string; video: string };
+}
+
+export interface PromptPreset {
+  id: string;
+  name: string;
+  category: string;
+  prompt: string;
+  tags: string[];
+}
+
+export interface PromptPresetsResponse {
+  categories: string[];
+  presets: PromptPreset[];
+}
+
+// ── Videos ─────────────────────────────────────────────────────
+
+export interface VideoEntry {
+  shotId: string;
+  sceneId: string;
+  sceneName: string;
+  modelSuffix: string;
+  modelName: string;
+  fileName: string;
+  sizeBytes: number;
+  sizeKb: number;
+  videoUrl: string;
+  heroUrl: string;
+  createdAt: string;
+}
+
+export interface VideosResponse {
+  videos: VideoEntry[];
+  stats: {
+    totalVideos: number;
+    totalShots: number;
+    shotsWithImages: number;
+    byModel: Record<string, number>;
+    byScene: Record<string, number>;
+    totalSizeBytes: number;
+  };
+}
+
 // ── API Wrapper ─────────────────────────────────────────────────
 
 export interface ApiResponse<T> {

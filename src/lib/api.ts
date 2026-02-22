@@ -9,8 +9,24 @@ import type {
   AutomationServiceStatus,
   AutomationQueueItem,
   AutomationEvent,
+  ContentDigest,
+  ContentPost,
+  WhatsAppJob,
+  NarrationJob,
+  OrchestrateJob,
+  OrchestrateStatusResponse,
+  OrchestrateModelsResponse,
+  PromptPresetsResponse,
+  VideosResponse,
 } from './types';
 import type { ResearchFeed, ResearchPlatform } from '@/components/research/research-types';
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 // Static demo data — used as fallback on GitHub Pages or when Flask is down
 import demoStatus from '../../data/demo-status.json';
@@ -208,25 +224,25 @@ export async function approveCredits(shotId: string, approved: boolean): Promise
 
 // ── Content Pipeline API ──────────────────────────────────────
 
-export async function getContentDigest() {
-  if (DEMO_ONLY) return demoContentDigest as Record<string, unknown>;
+export async function getContentDigest(): Promise<ContentDigest> {
+  if (DEMO_ONLY) return demoContentDigest as unknown as ContentDigest;
   try {
     const res = await fetchWithTimeout('/api/content/digest', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<ContentDigest>;
   } catch {
-    return demoContentDigest as Record<string, unknown>;
+    return demoContentDigest as unknown as ContentDigest;
   }
 }
 
-export async function getContentQueue() {
-  if (DEMO_ONLY) return demoContentQueue as unknown[];
+export async function getContentQueue(): Promise<ContentPost[]> {
+  if (DEMO_ONLY) return demoContentQueue as unknown as ContentPost[];
   try {
     const res = await fetchWithTimeout('/api/content/queue', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<ContentPost[]>;
   } catch {
-    return demoContentQueue as unknown[];
+    return demoContentQueue as unknown as ContentPost[];
   }
 }
 
@@ -245,42 +261,42 @@ export async function getAllDigests() {
 
 // ── WhatsApp Pipeline API ─────────────────────────────────────
 
-export async function getWhatsAppJobs() {
-  if (DEMO_ONLY) return demoWhatsAppJobs as unknown[];
+export async function getWhatsAppJobs(): Promise<WhatsAppJob[]> {
+  if (DEMO_ONLY) return demoWhatsAppJobs as unknown as WhatsAppJob[];
   try {
     const res = await fetchWithTimeout('/api/whatsapp/jobs', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<WhatsAppJob[]>;
   } catch {
-    return demoWhatsAppJobs as unknown[];
+    return demoWhatsAppJobs as unknown as WhatsAppJob[];
   }
 }
 
 // ── Videos API ────────────────────────────────────────────────
 
-export async function getVideos() {
-  if (DEMO_ONLY) return demoVideos as Record<string, unknown>;
+export async function getVideos(): Promise<VideosResponse> {
+  if (DEMO_ONLY) return demoVideos as unknown as VideosResponse;
   try {
     const res = await fetchWithTimeout('/api/videos', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    const data = await res.json();
+    const data = (await res.json()) as VideosResponse;
     // Fall back to demo data if API returns empty results (no videos on disk)
     if (!data.videos || data.videos.length === 0) {
-      return demoVideos as Record<string, unknown>;
+      return demoVideos as unknown as VideosResponse;
     }
     return data;
   } catch {
-    return demoVideos as Record<string, unknown>;
+    return demoVideos as unknown as VideosResponse;
   }
 }
 
 // ── Orchestrate API ───────────────────────────────────────────
 
-export async function getOrchestrateStatus() {
+export async function getOrchestrateStatus(): Promise<OrchestrateStatusResponse> {
   try {
     const res = await fetchWithTimeout('/api/orchestrate/status', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<OrchestrateStatusResponse>;
   } catch {
     return {
       pipelines: {
@@ -295,17 +311,17 @@ export async function getOrchestrateStatus() {
   }
 }
 
-export async function getOrchestrateModels() {
+export async function getOrchestrateModels(): Promise<OrchestrateModelsResponse> {
   try {
     const res = await fetchWithTimeout('/api/orchestrate/models', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<OrchestrateModelsResponse>;
   } catch {
     return { image: [], video: [], defaults: { image: "a", video: "a" } };
   }
 }
 
-export async function getOrchestrateJobs(filters?: { status?: string; pipeline?: string; limit?: number }) {
+export async function getOrchestrateJobs(filters?: { status?: string; pipeline?: string; limit?: number }): Promise<OrchestrateJob[]> {
   try {
     const params = new URLSearchParams();
     if (filters?.status) params.set("status", filters.status);
@@ -313,7 +329,7 @@ export async function getOrchestrateJobs(filters?: { status?: string; pipeline?:
     if (filters?.limit) params.set("limit", String(filters.limit));
     const res = await fetchWithTimeout(`/api/orchestrate/jobs?${params}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<OrchestrateJob[]>;
   } catch {
     return [];
   }
@@ -330,6 +346,8 @@ export async function createOrchestrateJob(job: {
   voiceKey?: string;
   imageModelAlias?: string;
   videoModelAlias?: string;
+  bgmPresetKey?: string;
+  bgmVolume?: number;
 }) {
   const res = await fetchWithTimeout('/api/orchestrate/jobs', {
     method: 'POST',
@@ -356,11 +374,11 @@ export async function updateOrchestrateJob(id: string, updates: Record<string, u
   return res.json();
 }
 
-export async function getPromptPresets() {
+export async function getPromptPresets(): Promise<PromptPresetsResponse> {
   try {
     const res = await fetchWithTimeout('/api/orchestrate/presets', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<PromptPresetsResponse>;
   } catch {
     return { categories: [], presets: [] };
   }
@@ -382,11 +400,11 @@ export async function savePromptPreset(preset: { name: string; category: string;
 // ── Narration Studio API ──────────────────────────────────────
 // NOTE: Uses raw fetch (not fetchWithTimeout) because TTS can take 300s+
 
-export async function getNarrationJobs() {
+export async function getNarrationJobs(): Promise<NarrationJob[]> {
   try {
     const res = await fetch('/api/narration/jobs', { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
+    return res.json() as Promise<NarrationJob[]>;
   } catch {
     return [];
   }
@@ -405,11 +423,11 @@ export async function generateNarrationScript(jobId: string, topic: string, vide
   return res.json() as Promise<{ script: string; wordCount: number; estimatedDurationSec: number }>;
 }
 
-export async function generateNarrationTts(jobId: string, script: string, voiceKey: string) {
+export async function generateNarrationTts(jobId: string, script: string, voiceKey: string, engine?: "f5tts" | "bark-openvoice") {
   const res = await fetch('/api/narration/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jobId, script, voiceKey }),
+    body: JSON.stringify({ jobId, script, voiceKey, engine }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -431,17 +449,34 @@ export async function saveNarrationScript(jobId: string, script: string) {
   return res.json() as Promise<{ script: string; wordCount: number; estimatedDurationSec: number }>;
 }
 
-export async function composeNarratedVideo(jobId: string, audioSettings?: { narrationVolume?: number; fadeIn?: number; fadeOut?: number }) {
+export async function composeNarratedVideo(
+  jobId: string,
+  audioSettings?: { narrationVolume?: number; fadeIn?: number; fadeOut?: number },
+  bgm?: { trackKey: string; volume?: number } | null,
+) {
   const res = await fetch('/api/narration/compose', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jobId, audioSettings }),
+    body: JSON.stringify({ jobId, audioSettings, bgm }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error ?? 'Failed to compose video');
   }
   return res.json() as Promise<{ videoUrl: string }>;
+}
+
+export async function updateNarrationMode(jobId: string, mode: "auto" | "manual", script?: string) {
+  const res = await fetch('/api/narration/mode', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jobId, narrationMode: mode, narrationScript: script }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? 'Failed to update narration mode');
+  }
+  return res.json() as Promise<{ ok: boolean }>;
 }
 
 // ── Queue API ─────────────────────────────────────────────────
@@ -526,4 +561,129 @@ export async function postTweet(text: string, mediaPath?: string) {
     throw new Error(err.error ?? 'Failed to post tweet');
   }
   return res.json() as Promise<{ success: boolean; postUrl: string | null }>;
+}
+
+// ── BGM Library API ───────────────────────────────────────────
+
+export interface BgmTrack {
+  key: string;
+  name: string;
+  category: string;
+  mood: string[];
+  source: string;
+  durationHint: number;
+  bpmHint: number;
+  quality: string;
+  license: string;
+  hasTrack: boolean;
+  downloadMeta?: { downloadedAt: string };
+}
+
+export interface BgmLibraryResponse {
+  version: string;
+  defaultTrack: string | null;
+  defaultVolume: number;
+  tracks: BgmTrack[];
+}
+
+export async function getBgmPresets(): Promise<BgmLibraryResponse> {
+  try {
+    const res = await fetchWithTimeout('/api/bgm', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json() as Promise<BgmLibraryResponse>;
+  } catch {
+    return { version: "1.0", defaultTrack: null, defaultVolume: 0.15, tracks: [] };
+  }
+}
+
+export async function updateBgmQuality(key: string, quality: string) {
+  const res = await fetchWithTimeout('/api/bgm', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, quality }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? 'Failed to update BGM quality');
+  }
+  return res.json() as Promise<{ ok: boolean }>;
+}
+
+export async function downloadBgmTrack(key: string) {
+  const res = await fetch('/api/bgm/download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? 'Failed to download BGM track');
+  }
+  return res.json() as Promise<{ ok: boolean; key: string; path: string }>;
+}
+
+// ── Analytics API ──────────────────────────────────────────────
+
+export async function getAnalytics() {
+  const res = await fetch("/api/analytics", { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch analytics");
+  return res.json();
+}
+
+// ── Templates API ─────────────────────────────────────────────
+
+export async function getTemplates() {
+  const res = await fetch("/api/templates", { cache: "no-store" });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function saveTemplate(template: Record<string, unknown>) {
+  const res = await fetch("/api/templates", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(template),
+  });
+  return res.json();
+}
+
+export async function deleteTemplate(id: string) {
+  return fetch("/api/templates", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+}
+
+export async function useTemplate(id: string) {
+  const res = await fetch("/api/templates", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, action: "use" }),
+  });
+  return res.json();
+}
+
+// ── Workers API ────────────────────────────────────────────────
+
+export async function getWorkerStatus() {
+  const res = await fetch("/api/workers", { cache: "no-store" });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function updateWorkerConfig(updates: Record<string, unknown>) {
+  const res = await fetch("/api/workers", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  return res.json();
+}
+
+// ── Thumbnails ────────────────────────────────────────────────
+
+export function getThumbnailUrl(mediaPath: string, size: "sm" | "md" | "lg" = "md") {
+  const cleanPath = mediaPath.replace(/^\/api\/media\//, "").replace(/^\//, "");
+  return `/api/thumbnails/${cleanPath}?size=${size}`;
 }

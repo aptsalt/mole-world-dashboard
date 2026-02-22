@@ -7,6 +7,7 @@ import {
   Zap,
   Newspaper,
   Play,
+  Pause,
   Clock,
   Plus,
   Search,
@@ -24,6 +25,9 @@ import {
   Clapperboard,
   Send,
   ArrowRight,
+  Music,
+  CloudDownload,
+  Volume2,
 } from "lucide-react";
 import { clsx } from "clsx";
 import {
@@ -33,7 +37,11 @@ import {
   createOrchestrateJob,
   updateOrchestrateJob,
   getPromptPresets,
+  getBgmPresets,
+  downloadBgmTrack,
 } from "@/lib/api";
+import type { BgmTrack } from "@/lib/api";
+import { TemplateGallery } from "@/components/orchestrate/template-gallery";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -156,17 +164,28 @@ export default function OrchestratePage() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // BGM state
+  const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([]);
+  const [selectedBgm, setSelectedBgm] = useState<string | null>(null);
+  const [bgmVolume, setBgmVolume] = useState(0.15);
+  const [bgmExpanded, setBgmExpanded] = useState(false);
+  const [bgmDownloading, setBgmDownloading] = useState<string | null>(null);
+  const [bgmPlaying, setBgmPlaying] = useState<string | null>(null);
+  const bgmAudioRef = useRef<HTMLAudioElement>(null);
+
   const promptRef = useRef<HTMLTextAreaElement>(null);
 
   // ── Data fetching ──────────────────────────────────────────
 
   const fetchAll = useCallback(async () => {
-    const [statusData, modelsData, jobsData, presetsData] = await Promise.all([
+    const [statusData, modelsData, jobsData, presetsData, bgmData] = await Promise.all([
       getOrchestrateStatus(),
       getOrchestrateModels(),
       getOrchestrateJobs({ limit: 50 }),
       getPromptPresets(),
+      getBgmPresets(),
     ]);
+    if (bgmData.tracks) setBgmTracks(bgmData.tracks);
 
     if (statusData.pipelines) {
       // Only take the 3 pipelines we care about
@@ -208,6 +227,8 @@ export default function OrchestratePage() {
         voiceKey: ["clip", "lesson"].includes(contentType) ? voiceKey : undefined,
         imageModelAlias: imageModel,
         videoModelAlias: ["clip", "lesson"].includes(contentType) ? videoModel : undefined,
+        bgmPresetKey: selectedBgm && ["clip", "lesson"].includes(contentType) ? selectedBgm : undefined,
+        bgmVolume: selectedBgm && ["clip", "lesson"].includes(contentType) ? bgmVolume : undefined,
       });
 
       setPrompt("");
@@ -235,6 +256,48 @@ export default function OrchestratePage() {
     setPrompt((prev) => prev ? `${prev}, ${presetPrompt}` : presetPrompt);
     promptRef.current?.focus();
   };
+
+  // Template system — populate form from a saved template
+  const handleUseTemplate = useCallback((template: {
+    type?: string;
+    prompt?: string;
+    pipeline?: string;
+    voiceKey?: string;
+    imageModelAlias?: string;
+    videoModelAlias?: string;
+    narrationMode?: string;
+    bgmPresetKey?: string;
+    bgmVolume?: number;
+  }) => {
+    if (template.type) setContentType(template.type as ContentType);
+    if (template.prompt) setPrompt(template.prompt);
+    if (template.pipeline) setSelectedPipeline(template.pipeline as Pipeline);
+    if (template.voiceKey) setVoiceKey(template.voiceKey);
+    if (template.imageModelAlias) setImageModel(template.imageModelAlias);
+    if (template.videoModelAlias) setVideoModel(template.videoModelAlias);
+    if (template.narrationMode) setNarrationMode(template.narrationMode as NarrationMode);
+    if (template.bgmPresetKey) setSelectedBgm(template.bgmPresetKey);
+    if (template.bgmVolume != null) setBgmVolume(template.bgmVolume);
+  }, []);
+
+  const currentTemplateValues = {
+    type: contentType,
+    pipeline: selectedPipeline,
+    prompt,
+    imageModelAlias: imageModel,
+    videoModelAlias: videoModel,
+    voiceKey,
+    narrationMode,
+    bgmPresetKey: selectedBgm ?? undefined,
+    bgmVolume,
+  };
+
+  // Sync BGM preview volume when slider changes
+  useEffect(() => {
+    if (bgmAudioRef.current) {
+      bgmAudioRef.current.volume = Math.min(bgmVolume * 3, 1.0);
+    }
+  }, [bgmVolume]);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -269,17 +332,17 @@ export default function OrchestratePage() {
   // ── Render ─────────────────────────────────────────────────
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0d0d1a] via-[#111126] to-[#0d0d1a]">
+    <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-[1400px] px-6 py-6">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-lime/20 to-cyan/20">
               <Clapperboard size={20} className="text-lime" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Orchestrate</h1>
-              <p className="text-xs text-zinc-500">Production Command Center</p>
+              <h1 className="text-xl font-bold text-text">Orchestrate</h1>
+              <p className="text-xs text-muted">Production Command Center</p>
             </div>
           </div>
           <button
@@ -291,7 +354,7 @@ export default function OrchestratePage() {
         </div>
 
         {/* Pipeline Status Bar — 3 cards */}
-        <div className="mb-6 grid grid-cols-3 gap-3">
+        <div className="mb-4 grid grid-cols-3 gap-2">
           {(Object.entries(PIPELINE_CONFIG) as [Pipeline, typeof PIPELINE_CONFIG[Pipeline]][]).map(([key, config]) => {
             const info = pipelines[key];
             const Icon = config.icon;
@@ -304,7 +367,7 @@ export default function OrchestratePage() {
                   <Icon size={16} className={config.color} />
                 </div>
                 <div className="flex flex-col items-start text-left">
-                  <span className="text-xs font-medium text-zinc-400">{config.label}</span>
+                    <span className="text-xs font-medium text-muted">{config.label}</span>
                   <div className="flex items-center gap-1.5">
                     <span className={clsx("h-1.5 w-1.5 rounded-full", STATUS_DOT[info.status])} />
                     <span className={clsx("text-xs font-semibold capitalize", STATUS_COLORS[info.status])}>
@@ -324,13 +387,13 @@ export default function OrchestratePage() {
 
         {/* Two-column layout: Presets Left, Composer + Queue Right */}
         <div className="flex gap-6">
-          {/* ── Left Column: Prompt Library ──────────────────── */}
-          <div className="w-[340px] shrink-0">
+          {/* ── Left Column: Prompt Library + Templates ──────── */}
+          <div className="w-[340px] shrink-0 space-y-4">
             <div className="sticky top-0 rounded-xl border border-white/[0.08] bg-bg-light/80">
               {/* Header */}
               <div className="flex items-center gap-2 border-b border-white/[0.06] p-4">
                 <Quote size={14} className="text-amber-400" />
-                <span className="text-sm font-semibold text-white">Prompt Library</span>
+                <span className="text-sm font-semibold text-text">Prompt Library</span>
                 <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400">
                   {presets.length}
                 </span>
@@ -339,13 +402,13 @@ export default function OrchestratePage() {
               {/* Search */}
               <div className="border-b border-white/[0.06] px-4 py-3">
                 <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5">
-                  <Search size={12} className="text-zinc-600" />
+                  <Search size={12} className="text-muted" />
                   <input
                     type="text"
                     value={presetSearch}
                     onChange={(e) => setPresetSearch(e.target.value)}
                     placeholder="Search presets..."
-                    className="flex-1 bg-transparent text-xs text-white outline-none placeholder-zinc-600"
+                    className="flex-1 bg-transparent text-xs text-white outline-none placeholder:text-muted"
                   />
                 </div>
               </div>
@@ -358,7 +421,7 @@ export default function OrchestratePage() {
                     "rounded-md px-2.5 py-1 text-[10px] font-medium transition",
                     activePresetCategory === "all"
                       ? "bg-amber-500/15 text-amber-400"
-                      : "bg-white/5 text-zinc-500 hover:bg-white/10"
+                      : "bg-white/5 text-muted hover:bg-white/10"
                   )}
                 >
                   All
@@ -371,7 +434,7 @@ export default function OrchestratePage() {
                       "rounded-md px-2.5 py-1 text-[10px] font-medium transition",
                       activePresetCategory === cat
                         ? "bg-amber-500/15 text-amber-400"
-                        : "bg-white/5 text-zinc-500 hover:bg-white/10"
+                        : "bg-white/5 text-muted hover:bg-white/10"
                     )}
                   >
                     {cat}
@@ -392,19 +455,25 @@ export default function OrchestratePage() {
                       <span className="text-[10px] font-semibold text-zinc-300 group-hover:text-amber-300">
                         {preset.name}
                       </span>
-                      <span className="mt-0.5 line-clamp-2 text-[9px] leading-tight text-zinc-600">
+                      <span className="mt-0.5 line-clamp-2 text-[10px] leading-tight text-muted">
                         {preset.prompt.slice(0, 80)}...
                       </span>
                     </button>
                   ))}
                   {filteredPresets.length === 0 && (
-                    <div className="col-span-2 py-8 text-center text-xs text-zinc-600">
+                    <div className="col-span-2 py-8 text-center text-xs text-muted">
                       No presets found
                     </div>
                   )}
                 </div>
               </div>
             </div>
+
+            {/* Template Gallery */}
+            <TemplateGallery
+              onUseTemplate={handleUseTemplate}
+              currentValues={currentTemplateValues}
+            />
           </div>
 
           {/* ── Right Column: Composer + Queue Summary ───────── */}
@@ -413,7 +482,7 @@ export default function OrchestratePage() {
             <div className="mb-6 rounded-xl border border-white/[0.08] bg-bg-light/80 p-5">
               <div className="mb-4 flex items-center gap-2">
                 <Sparkles size={14} className="text-lime" />
-                <span className="text-sm font-semibold text-white">Composer</span>
+                <span className="text-sm font-semibold text-text">Composer</span>
               </div>
 
               {/* Pipeline selector (3 pipelines, no distribution) */}
@@ -428,7 +497,7 @@ export default function OrchestratePage() {
                         "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition",
                         selectedPipeline === key
                           ? `${config.bgColor} ${config.color} ring-1 ring-white/20`
-                          : "bg-white/5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300"
+                          : "bg-white/5 text-muted hover:bg-white/10 hover:text-zinc-300"
                       )}
                     >
                       <Icon size={12} /> {config.label}
@@ -450,7 +519,7 @@ export default function OrchestratePage() {
                           "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition",
                           contentType === t
                             ? "bg-lime/15 text-lime ring-1 ring-lime/30"
-                            : "bg-white/5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300"
+                            : "bg-white/5 text-muted hover:bg-white/10 hover:text-zinc-300"
                         )}
                       >
                         <Icon size={12} /> {t}
@@ -465,7 +534,7 @@ export default function OrchestratePage() {
                 <div className="mb-4 rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-center">
                   <Monitor size={24} className="mx-auto mb-2 text-blue-400" />
                   <p className="text-sm font-medium text-blue-300">Coming Soon: RTX 4090M Pipeline</p>
-                  <p className="mt-1 text-xs text-zinc-500">Local Stable Diffusion, ComfyUI, and LLM inference</p>
+                  <p className="mt-1 text-xs text-muted">Local Stable Diffusion, ComfyUI, and LLM inference</p>
                 </div>
               )}
 
@@ -478,7 +547,7 @@ export default function OrchestratePage() {
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder={selectedPipeline === "content" ? "Enter topic or news story..." : "Describe what you want to create..."}
-                      className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition focus:border-lime/40 focus:ring-1 focus:ring-lime/20"
+                      className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-muted outline-none transition focus:border-lime/40 focus:ring-1 focus:ring-lime/20"
                       rows={3}
                     />
                   </div>
@@ -488,7 +557,7 @@ export default function OrchestratePage() {
                     <div className="mb-4 flex flex-wrap gap-3">
                       {/* Image model */}
                       <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Image Model</label>
+                        <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Image Model</label>
                         <select
                           value={imageModel}
                           onChange={(e) => setImageModel(e.target.value)}
@@ -504,7 +573,7 @@ export default function OrchestratePage() {
                       {/* Video model (for clip/lesson) */}
                       {["clip", "lesson"].includes(contentType) && (
                         <div className="flex flex-col gap-1">
-                          <label className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Video Model</label>
+                          <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Video Model</label>
                           <select
                             value={videoModel}
                             onChange={(e) => setVideoModel(e.target.value)}
@@ -521,9 +590,9 @@ export default function OrchestratePage() {
                       {/* Voice (for clip/lesson) */}
                       {["clip", "lesson"].includes(contentType) && (
                         <div className="flex flex-col gap-1">
-                          <label className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Voice</label>
+                          <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Voice</label>
                           <div className="flex items-center gap-2">
-                            <Mic size={12} className="text-zinc-500" />
+                            <Mic size={12} className="text-muted" />
                             <input
                               type="text"
                               value={voiceKey}
@@ -538,7 +607,7 @@ export default function OrchestratePage() {
                       {/* Narration mode (for clip/lesson) */}
                       {["clip", "lesson"].includes(contentType) && (
                         <div className="flex flex-col gap-1">
-                          <label className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Narration</label>
+                          <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Narration</label>
                           <div className="flex gap-1">
                             {(["auto", "manual"] as NarrationMode[]).map((mode) => (
                               <button
@@ -548,7 +617,7 @@ export default function OrchestratePage() {
                                   "rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition",
                                   narrationMode === mode
                                     ? "bg-cyan/15 text-cyan ring-1 ring-cyan/30"
-                                    : "bg-white/5 text-zinc-500 hover:bg-white/10"
+                                    : "bg-white/5 text-muted hover:bg-white/10"
                                 )}
                               >
                                 {mode}
@@ -560,12 +629,136 @@ export default function OrchestratePage() {
                     </div>
                   )}
 
+                  {/* BGM Picker (for clip/lesson) */}
+                  {["clip", "lesson"].includes(contentType) && selectedPipeline === "higgsfield" && (
+                    <div className="mb-4">
+                      <button
+                        onClick={() => setBgmExpanded(!bgmExpanded)}
+                        className={clsx(
+                          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition",
+                          selectedBgm
+                            ? "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20"
+                            : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                        )}
+                      >
+                        <Music size={12} />
+                        {selectedBgm
+                          ? `BGM: ${bgmTracks.find((t) => t.key === selectedBgm)?.name ?? selectedBgm}`
+                          : "Add Background Music"
+                        }
+                        {selectedBgm && (
+                          <span className="ml-1 text-[10px] opacity-60">vol {bgmVolume.toFixed(2)}</span>
+                        )}
+                        <span className="ml-auto text-[10px] opacity-50">{bgmExpanded ? "▲" : "▼"}</span>
+                      </button>
+
+                      {bgmExpanded && (
+                        <div className="mt-2 rounded-lg border border-white/[0.08] bg-white/[0.02] p-3">
+                          {/* No BGM + Volume */}
+                          <div className="flex items-center gap-3 mb-2">
+                            <button
+                              onClick={() => setSelectedBgm(null)}
+                              className={clsx(
+                                "rounded px-2 py-1 text-[10px] font-medium transition",
+                                !selectedBgm
+                                  ? "bg-white/10 text-white ring-1 ring-white/20"
+                                  : "bg-white/5 text-muted hover:bg-white/10"
+                              )}
+                            >
+                              None
+                            </button>
+                            {selectedBgm && (
+                              <div className="flex items-center gap-2 flex-1">
+                                <Volume2 size={10} className="text-muted" />
+                                <input
+                                  type="range"
+                                  min={0} max={0.5} step={0.01}
+                                  value={bgmVolume}
+                                  onChange={(e) => setBgmVolume(parseFloat(e.target.value))}
+                                  className="flex-1 accent-amber-500"
+                                />
+                                <span className="text-[10px] text-muted w-8">{bgmVolume.toFixed(2)}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Track grid */}
+                          <div className="max-h-[180px] overflow-y-auto space-y-1 scrollbar-thin">
+                            {bgmTracks.map((track) => (
+                              <div
+                                key={track.key}
+                                onClick={() => { if (track.hasTrack) setSelectedBgm(track.key); }}
+                                className={clsx(
+                                  "flex items-center gap-2 rounded px-2 py-1.5 text-[11px] cursor-pointer transition",
+                                  selectedBgm === track.key
+                                    ? "bg-amber-500/10 text-amber-400"
+                                    : "text-zinc-400 hover:bg-white/5"
+                                )}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <span className="font-medium text-zinc-300">{track.name}</span>
+                                  <span className="ml-1.5 text-[10px] opacity-50">{track.category}</span>
+                                </div>
+                                {track.hasTrack ? (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const audio = bgmAudioRef.current;
+                                      if (!audio) return;
+                                      if (bgmPlaying === track.key) {
+                                        audio.pause();
+                                        setBgmPlaying(null);
+                                      } else {
+                                        audio.src = `/api/media/bgm/${track.key}/track.mp3`;
+                                        audio.volume = Math.min(bgmVolume * 3, 1.0);
+                                        audio.play().catch(() => {});
+                                        setBgmPlaying(track.key);
+                                      }
+                                    }}
+                                    className="text-amber-400 hover:text-amber-300"
+                                    title={bgmPlaying === track.key ? "Pause" : "Preview"}
+                                  >
+                                    {bgmPlaying === track.key ? <Pause size={10} /> : <Play size={10} />}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setBgmDownloading(track.key);
+                                      downloadBgmTrack(track.key)
+                                        .then(() => fetchAll())
+                                        .catch(() => {})
+                                        .finally(() => setBgmDownloading(null));
+                                    }}
+                                    disabled={bgmDownloading === track.key}
+                                    className="text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                                    title="Download"
+                                  >
+                                    {bgmDownloading === track.key
+                                      ? <Loader2 size={10} className="animate-spin" />
+                                      : <CloudDownload size={10} />
+                                    }
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <audio
+                            ref={bgmAudioRef}
+                            onEnded={() => setBgmPlaying(null)}
+                            onPause={() => setBgmPlaying(null)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Manual narration script */}
                   {narrationMode === "manual" && ["clip", "lesson"].includes(contentType) && selectedPipeline === "higgsfield" && (
                     <div className="mb-4">
                       <div className="mb-1 flex items-center justify-between">
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Narration Script</label>
-                        <span className="text-[10px] text-zinc-600">
+                        <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Narration Script</label>
+                        <span className="text-[10px] text-muted">
                           {wordCount} words / ~{estimatedDuration}s
                         </span>
                       </div>
@@ -573,7 +766,7 @@ export default function OrchestratePage() {
                         value={narrationScript}
                         onChange={(e) => setNarrationScript(e.target.value)}
                         placeholder="Write your narration script here..."
-                        className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition focus:border-cyan/40"
+                        className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-muted outline-none transition focus:border-cyan/40"
                         rows={4}
                       />
                     </div>
@@ -614,7 +807,7 @@ export default function OrchestratePage() {
                       <Play size={12} /> Run Now
                     </button>
 
-                    <span className="ml-auto text-[10px] text-zinc-600">Ctrl+Enter to submit</span>
+                    <span className="ml-auto text-[10px] text-muted">Ctrl+Enter to submit</span>
                   </div>
                 </>
               )}
@@ -625,9 +818,9 @@ export default function OrchestratePage() {
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles size={14} className="text-cyan" />
-                  <span className="text-sm font-semibold text-white">Queue Summary</span>
+                  <span className="text-sm font-semibold text-text">Queue Summary</span>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+                <div className="flex items-center gap-3 text-[10px] text-muted">
                   <span className="flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-lime" />
                     {activeJobs.length} active
@@ -652,7 +845,7 @@ export default function OrchestratePage() {
               {/* Compact job rows */}
               <div className="flex flex-col gap-1.5">
                 {topJobs.length === 0 && (
-                  <div className="py-6 text-center text-xs text-zinc-600">
+                  <div className="py-6 text-center text-xs text-muted">
                     No jobs yet. Use the composer to create one.
                   </div>
                 )}
@@ -679,9 +872,21 @@ export default function OrchestratePage() {
                       </div>
 
                       {/* Type badge */}
-                      <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-zinc-400">
+                      <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted">
                         {job.type}
                       </span>
+
+                      {/* Narration mode badge (clip/lesson only) */}
+                      {["clip", "lesson"].includes(job.type) && job.narrationMode && (
+                        <span className={clsx(
+                          "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
+                          job.narrationMode === "auto"
+                            ? "bg-cyan/10 text-cyan"
+                            : "bg-purple-500/10 text-purple-400"
+                        )}>
+                          {job.narrationMode === "auto" ? "🎤 Auto" : "✏️ Manual"}
+                        </span>
+                      )}
 
                       {/* Description */}
                       <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-300">{job.description}</p>
@@ -712,8 +917,19 @@ export default function OrchestratePage() {
                         </button>
                       )}
 
+                      {/* Open in Narration Studio link for completed clip/lesson jobs */}
+                      {job.status === "completed" && ["clip", "lesson"].includes(job.type) && (
+                        <Link
+                          href="/narration"
+                          className="rounded p-0.5 text-zinc-600 transition hover:bg-purple-500/20 hover:text-purple-400"
+                          title="Open in Narration Studio"
+                        >
+                          <Mic size={10} />
+                        </Link>
+                      )}
+
                       {/* Time */}
-                      <span className="shrink-0 text-[9px] text-zinc-600">
+                      <span className="shrink-0 text-[10px] text-muted">
                         {formatTimeAgo(job.createdAt)}
                       </span>
                     </div>

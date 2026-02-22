@@ -81,7 +81,7 @@ export default function TweetComposer({ item, onClose }: TweetComposerProps) {
     <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-bg-light border-l border-white/[0.08] shadow-2xl flex flex-col animate-slide-in-right">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
-        <h3 className="text-sm font-semibold text-white">Compose Tweet</h3>
+        <h3 className="text-sm font-semibold text-text">Compose Tweet</h3>
         <button
           onClick={onClose}
           className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"

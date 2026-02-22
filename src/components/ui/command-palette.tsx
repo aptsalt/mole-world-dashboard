@@ -13,6 +13,7 @@ import {
   Cog,
   Rocket,
   RefreshCw,
+  BarChart3,
 } from "lucide-react";
 import { useDashboardStore } from "@/lib/store";
 import { useToastStore } from "./toast";
@@ -31,6 +32,7 @@ const COMMANDS = [
   { label: "Compose", icon: Layers, action: "navigate", path: "/compose" },
   { label: "Settings", icon: Cog, action: "navigate", path: "/settings" },
   { label: "Pitch Deck", icon: Rocket, action: "navigate", path: "/pitch" },
+  { label: "Analytics", icon: BarChart3, action: "navigate", path: "/analytics" },
   { label: "Refresh Data", icon: RefreshCw, action: "refresh", path: "" },
 ] as const;
 
@@ -105,7 +107,7 @@ export function CommandPalette() {
         style={{ maxWidth: 520 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.10]">
           <Search size={16} className="text-muted" />
           <input
             ref={inputRef}
@@ -117,10 +119,14 @@ export function CommandPalette() {
             onKeyDown={handleKeyDown}
             placeholder="Search commands..."
             className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-muted"
+            aria-label="Search commands"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-list"
           />
           <span className="kbd">ESC</span>
         </div>
-        <div className="p-2 max-h-[320px] overflow-y-auto">
+        <div id="command-list" role="listbox" className="p-2 max-h-[320px] overflow-y-auto">
           {filtered.map((cmd, i) => (
             <button
               key={cmd.label}

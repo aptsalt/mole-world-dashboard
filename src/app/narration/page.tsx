@@ -4,15 +4,25 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Mic2, RefreshCw, Play, Pause, Download, Send, Save,
   Sparkles, Volume2, Wand2, Film, Clock, Eye,
-  FileAudio, AudioWaveform, AlertCircle, Check,
+  FileAudio, AudioWaveform, AlertCircle, Check, Layers,
+  Loader2, Music, CloudDownload,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { SkeletonLine, SkeletonCircle, SkeletonBlock } from "@/components/ui/skeleton";
 import {
   getNarrationJobs,
   generateNarrationScript,
   generateNarrationTts,
   composeNarratedVideo,
   saveNarrationScript,
+  updateNarrationMode,
+  getBgmPresets,
+  downloadBgmTrack,
 } from "@/lib/api";
+import type { BgmTrack } from "@/lib/api";
+import { FilterTabs } from "@/components/ui/filter-tabs";
+import { VideoPreview } from "@/components/ui/video-preview";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -22,6 +32,7 @@ interface NarrationJob {
   description: string;
   status: string;
   voiceKey: string | null;
+  narrationMode: string;
   narrationScript: string | null;
   narrationStatus: string;
   narrationAudioPath: string | null;
@@ -64,11 +75,11 @@ function timeAgo(iso: string): string {
 function statusDot(narrationStatus: string): string {
   switch (narrationStatus) {
     case "none": return "#6b7280";
-    case "script_ready": return "#f59e0b";
-    case "generating_tts": return "#c8ff00";
+    case "script_ready": return "var(--warning)";
+    case "generating_tts": return "var(--lime)";
     case "tts_ready": return "#3b82f6";
-    case "composing": return "#c8ff00";
-    case "composed": return "#22c55e";
+    case "composing": return "var(--lime)";
+    case "composed": return "var(--success)";
     default: return "#6b7280";
   }
 }
@@ -122,6 +133,7 @@ export default function NarrationStudioPage() {
   const [script, setScript] = useState("");
   const [voiceKey, setVoiceKey] = useState("morgan_freeman");
   const [voices, setVoices] = useState<VoiceEntry[]>([]);
+  const [ttsEngine, setTtsEngine] = useState<"f5tts" | "bark-openvoice">("f5tts");
   const [narrationVolume, setNarrationVolume] = useState(1.0);
   const [fadeIn, setFadeIn] = useState(0.5);
   const [fadeOut, setFadeOut] = useState(1.0);
@@ -142,6 +154,20 @@ export default function NarrationStudioPage() {
   const [narratedUrl, setNarratedUrl] = useState<string | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isSyncPlaying, setIsSyncPlaying] = useState(false);
+
+  // Mode toggle + batch
+  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
+  const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
+  const [isBatchRunning, setIsBatchRunning] = useState(false);
+
+  // BGM state
+  const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([]);
+  const [selectedBgm, setSelectedBgm] = useState<string | null>(null);
+  const [bgmVolume, setBgmVolume] = useState(0.15);
+  const [bgmCategory, setBgmCategory] = useState<string>("All");
+  const [bgmDownloading, setBgmDownloading] = useState<string | null>(null);
+  const [bgmPlaying, setBgmPlaying] = useState<string | null>(null);
+  const bgmAudioRef = useRef<HTMLAudioElement>(null);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -172,12 +198,20 @@ export default function NarrationStudioPage() {
     } catch { /* silent */ }
   }, []);
 
+  const fetchBgm = useCallback(async () => {
+    try {
+      const data = await getBgmPresets();
+      setBgmTracks(data.tracks ?? []);
+    } catch { /* silent */ }
+  }, []);
+
   useEffect(() => {
     fetchJobs();
     fetchVoices();
-    const interval = setInterval(fetchJobs, 5000);
+    fetchBgm();
+    const interval = setInterval(fetchJobs, 15_000);
     return () => clearInterval(interval);
-  }, [fetchJobs, fetchVoices]);
+  }, [fetchJobs, fetchVoices, fetchBgm]);
 
   // Sync editor when selection changes
   useEffect(() => {
@@ -256,7 +290,7 @@ export default function NarrationStudioPage() {
     }, 1000);
 
     try {
-      const result = await generateNarrationTts(selectedJob.id, script, voiceKey);
+      const result = await generateNarrationTts(selectedJob.id, script, voiceKey, ttsEngine);
       setAudioUrl(result.audioUrl);
       await fetchJobs();
     } catch (err) {
@@ -273,17 +307,29 @@ export default function NarrationStudioPage() {
     setIsComposing(true);
     setError(null);
     try {
+      const bgm = selectedBgm ? { trackKey: selectedBgm, volume: bgmVolume } : null;
       const result = await composeNarratedVideo(selectedJob.id, {
         narrationVolume,
         fadeIn,
         fadeOut,
-      });
+      }, bgm);
       setNarratedUrl(result.videoUrl);
       await fetchJobs();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Compose failed");
     }
     setIsComposing(false);
+  };
+
+  const handleDownloadBgm = async (key: string) => {
+    setBgmDownloading(key);
+    try {
+      await downloadBgmTrack(key);
+      await fetchBgm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "BGM download failed");
+    }
+    setBgmDownloading(null);
   };
 
   const handlePlayAudio = () => {
@@ -327,6 +373,69 @@ export default function NarrationStudioPage() {
     }
   };
 
+  const handleSwitchMode = async (newMode: "auto" | "manual") => {
+    if (!selectedJob) return;
+    setIsSwitchingMode(true);
+    setError(null);
+    try {
+      await updateNarrationMode(
+        selectedJob.id,
+        newMode,
+        newMode === "manual" ? script : undefined,
+      );
+      await fetchJobs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to switch mode");
+    }
+    setIsSwitchingMode(false);
+  };
+
+  const toggleBatchItem = (id: string) => {
+    setBatchSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBatchGenerate = async () => {
+    if (batchSelected.size === 0) return;
+    setIsBatchRunning(true);
+    setError(null);
+    const ids = Array.from(batchSelected);
+    for (const id of ids) {
+      const job = jobs.find((j) => j.id === id);
+      if (!job) continue;
+      try {
+        // Generate script if none exists
+        if (!job.narrationScript?.trim()) {
+          await generateNarrationScript(job.id, job.description, 30);
+        }
+        // Fetch updated job to get script
+        const updatedJobs = await getNarrationJobs();
+        const updatedJob = updatedJobs.find((j: NarrationJob) => j.id === id);
+        if (updatedJob?.narrationScript?.trim()) {
+          await generateNarrationTts(updatedJob.id, updatedJob.narrationScript, updatedJob.voiceKey ?? "morgan_freeman");
+        }
+        setJobs(updatedJobs);
+      } catch {
+        // Continue with next job on error
+      }
+    }
+    setBatchSelected(new Set());
+    setIsBatchRunning(false);
+    await fetchJobs();
+  };
+
+  // Sync BGM preview volume when slider changes
+  useEffect(() => {
+    if (bgmAudioRef.current) {
+      // Scale up for preview (no narration to compete with), clamp to 1.0
+      bgmAudioRef.current.volume = Math.min(bgmVolume * 3, 1.0);
+    }
+  }, [bgmVolume]);
+
   // Clean up audio on unmount
   useEffect(() => {
     return () => {
@@ -341,42 +450,39 @@ export default function NarrationStudioPage() {
   // ── Render ─────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
+    <div className="flex h-full flex-col gap-4 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
-            <Mic2 size={20} className="text-purple-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">Narration Studio</h1>
-            <p className="text-xs text-muted">Post-video narration pipeline</p>
-          </div>
-        </div>
-        <button
-          onClick={fetchJobs}
-          className="flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-2 text-xs text-muted hover:bg-white/[0.1] hover:text-white transition-colors"
-        >
-          <RefreshCw size={14} />
-          Refresh
-        </button>
-      </div>
+      <PageHeader
+        icon={Mic2}
+        iconBg="bg-purple-500/10"
+        iconColor="text-purple-400"
+        title="Narration Studio"
+        subtitle="Post-video narration pipeline"
+        actions={
+          <button
+            onClick={fetchJobs}
+            className="flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-2 text-xs text-muted hover:bg-white/[0.1] hover:text-white transition-colors"
+          >
+            <RefreshCw size={14} />
+            Refresh
+          </button>
+        }
+      />
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {[
-          { label: "Ready", count: readyCount, color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
-          { label: "In Progress", count: progressCount, color: "#c8ff00", bg: "rgba(200,255,0,0.08)" },
-          { label: "Composed", count: composedCount, color: "#22c55e", bg: "rgba(34,197,94,0.08)" },
+          { label: "Ready", value: readyCount, color: "var(--warning)", icon: Clock },
+          { label: "In Progress", value: progressCount, color: "var(--lime)", icon: Loader2 },
+          { label: "Composed", value: composedCount, color: "var(--success)", icon: Check },
         ].map((stat) => (
-          <div
+          <StatCard
             key={stat.label}
-            className="rounded-xl border border-white/[0.08] p-4"
-            style={{ background: stat.bg }}
-          >
-            <div className="text-2xl font-bold" style={{ color: stat.color }}>{stat.count}</div>
-            <div className="text-xs text-muted mt-1">{stat.label}</div>
-          </div>
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+          />
         ))}
       </div>
 
@@ -385,26 +491,65 @@ export default function NarrationStudioPage() {
         {/* Left Panel: Job List */}
         <div className="flex w-[340px] shrink-0 flex-col rounded-xl border border-white/[0.08] bg-white/[0.02]">
           {/* Filter Tabs */}
-          <div className="flex border-b border-white/[0.08] p-2 gap-1">
-            {(["all", "ready", "in_progress", "composed"] as FilterMode[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                  filter === f
-                    ? "bg-white/[0.1] text-white"
-                    : "text-muted hover:text-white/70"
-                }`}
-              >
-                {f === "all" ? "All" : f === "ready" ? "Ready" : f === "in_progress" ? "Active" : "Done"}
-              </button>
-            ))}
+          <div className="border-b border-white/[0.08] p-2">
+            <FilterTabs
+              tabs={[
+                { key: "all", label: "All" },
+                { key: "ready", label: "Ready" },
+                { key: "in_progress", label: "Active" },
+                { key: "composed", label: "Done" },
+              ]}
+              active={filter}
+              onChange={(key) => setFilter(key as FilterMode)}
+            />
           </div>
+
+          {/* Batch Actions */}
+          {batchSelected.size > 0 && (
+            <div className="flex items-center gap-2 border-b border-white/[0.08] px-3 py-2">
+              <span className="text-[10px] text-muted">{batchSelected.size} selected</span>
+              <button
+                onClick={handleBatchGenerate}
+                disabled={isBatchRunning}
+                className="flex items-center gap-1 rounded-lg bg-purple-500/10 px-2 py-1 text-[10px] font-medium text-purple-400 hover:bg-purple-500/20 disabled:opacity-50 transition-colors"
+              >
+                {isBatchRunning ? (
+                  <><RefreshCw size={10} className="animate-spin" /> Running...</>
+                ) : (
+                  <><Layers size={10} /> Batch Generate</>
+                )}
+              </button>
+              <button
+                onClick={() => setBatchSelected(new Set())}
+                className="text-[10px] text-muted hover:text-white transition-colors ml-auto"
+              >
+                Clear
+              </button>
+            </div>
+          )}
 
           {/* Job Cards */}
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {loading ? (
-              <div className="flex items-center justify-center py-12 text-muted text-xs">Loading...</div>
+              <div className="space-y-2 animate-fade-in">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div key={i} className="rounded-lg bg-white/[0.02] border border-transparent p-3 space-y-2" style={{ animationDelay: `${i * 60}ms` }}>
+                    <div className="flex items-center gap-2">
+                      <SkeletonBlock className="w-14 h-5 rounded" />
+                      <div className="flex-1" />
+                      <SkeletonCircle size={8} />
+                    </div>
+                    <SkeletonLine className="w-full h-3" />
+                    <SkeletonLine className="w-3/4 h-3" />
+                    <div className="flex items-center gap-2">
+                      <SkeletonCircle size={10} />
+                      <SkeletonLine className="w-12 h-2" />
+                      <div className="flex-1" />
+                      <SkeletonLine className="w-16 h-2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted text-xs">
                 <Film size={24} className="mb-2 opacity-30" />
@@ -412,15 +557,28 @@ export default function NarrationStudioPage() {
                 <p className="mt-1 text-[10px]">Complete a lesson or clip to get started</p>
               </div>
             ) : (
-              filteredJobs.map((job) => (
-                <button
+              filteredJobs.map((job) => {
+                const isReady = job.narrationStatus === "none" || job.narrationStatus === "script_ready";
+                return (
+                <div
                   key={job.id}
-                  onClick={() => setSelectedId(job.id)}
-                  className={`w-full rounded-lg p-3 text-left transition-all ${
+                  className={`flex items-start gap-2 w-full rounded-lg p-3 text-left transition-all ${
                     selectedId === job.id
                       ? "bg-purple-500/10 border border-purple-500/30"
                       : "bg-white/[0.02] border border-transparent hover:bg-white/[0.05]"
                   }`}
+                >
+                  {isReady && (
+                    <input
+                      type="checkbox"
+                      checked={batchSelected.has(job.id)}
+                      onChange={(e) => { e.stopPropagation(); toggleBatchItem(job.id); }}
+                      className="mt-1 shrink-0 accent-purple-500"
+                    />
+                  )}
+                <button
+                  onClick={() => setSelectedId(job.id)}
+                  className="flex-1 text-left min-w-0"
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
@@ -431,6 +589,15 @@ export default function NarrationStudioPage() {
                     >
                       {job.type}
                     </span>
+                    {job.narrationMode && (
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                        job.narrationMode === "auto"
+                          ? "bg-cyan/10 text-cyan"
+                          : "bg-purple-500/10 text-purple-400"
+                      }`}>
+                        {job.narrationMode === "auto" ? "Auto" : "Manual"}
+                      </span>
+                    )}
                     <span className="flex-1" />
                     <span
                       className="h-2 w-2 rounded-full"
@@ -445,7 +612,9 @@ export default function NarrationStudioPage() {
                     <span className="ml-auto">{statusLabel(job.narrationStatus)}</span>
                   </div>
                 </button>
-              ))
+                </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -474,17 +643,17 @@ export default function NarrationStudioPage() {
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Film size={14} className="text-purple-400" />
-                  <span className="text-sm font-medium text-white">Silent Video Preview</span>
+                  <span className="text-sm font-medium text-text">Silent Video Preview</span>
                   {selectedJob.silentVideoExists && (
                     <span className="ml-auto text-[10px] text-muted">Silent source</span>
                   )}
                 </div>
                 {selectedJob.silentVideoUrl ? (
-                  <video
-                    ref={videoRef}
+                  <VideoPreview
                     src={selectedJob.silentVideoUrl}
-                    controls
-                    className="w-full rounded-lg bg-black max-h-[280px]"
+                    alt={`Silent video for ${selectedJob.id}`}
+                    aspectRatio="video"
+                    className="w-full max-h-[280px]"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-[200px] rounded-lg bg-black/30 text-muted text-xs">
@@ -493,11 +662,40 @@ export default function NarrationStudioPage() {
                 )}
               </div>
 
+              {/* Narration Mode Toggle */}
+              {(selectedJob.narrationStatus === "none" || selectedJob.narrationStatus === "script_ready") && (
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                  <div className="flex items-center gap-2">
+                    <Mic2 size={14} className="text-cyan" />
+                    <span className="text-sm font-medium text-text">Narration Mode</span>
+                    <div className="ml-auto flex gap-1">
+                      {(["auto", "manual"] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => handleSwitchMode(mode)}
+                          disabled={isSwitchingMode}
+                          className={`rounded-lg px-3 py-1.5 text-[11px] font-medium capitalize transition-colors ${
+                            (selectedJob.narrationMode ?? "auto") === mode
+                              ? mode === "auto" ? "bg-cyan/15 text-cyan ring-1 ring-cyan/30" : "bg-purple-500/15 text-purple-400 ring-1 ring-purple-500/30"
+                              : "bg-white/5 text-muted hover:bg-white/10"
+                          }`}
+                        >
+                          {mode === "auto" ? "🎤 Auto" : "✏️ Manual"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {(selectedJob.narrationMode ?? "auto") === "auto" && (
+                    <p className="mt-2 text-[10px] text-muted">Script will be auto-generated via Ollama after video is ready, then converted to TTS.</p>
+                  )}
+                </div>
+              )}
+
               {/* Script Editor */}
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Wand2 size={14} className="text-amber-400" />
-                  <span className="text-sm font-medium text-white">Narration Script</span>
+                  <span className="text-sm font-medium text-text">Narration Script</span>
                   {scriptDirty && (
                     <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/15 text-amber-400">
                       Unsaved
@@ -573,7 +771,7 @@ export default function NarrationStudioPage() {
                   value={script}
                   onChange={(e) => { setScript(e.target.value); setScriptDirty(true); }}
                   placeholder="Write your narration script here, or click Auto-Generate above..."
-                  className="w-full h-32 rounded-lg bg-black/20 border border-white/[0.08] p-3 text-sm text-white/90 placeholder:text-white/20 resize-y focus:outline-none focus:border-purple-500/40"
+                  className="w-full h-32 rounded-lg bg-black/20 border border-white/[0.08] p-3 text-sm text-white/90 placeholder:text-muted resize-y focus:outline-none focus:border-purple-500/40"
                 />
               </div>
 
@@ -581,7 +779,33 @@ export default function NarrationStudioPage() {
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Volume2 size={14} className="text-blue-400" />
-                  <span className="text-sm font-medium text-white">Voice & Audio</span>
+                  <span className="text-sm font-medium text-text">Voice & Audio</span>
+                </div>
+
+                {/* Engine Toggle */}
+                <div className="flex items-center gap-3 mb-4">
+                  <label className="text-xs text-muted whitespace-nowrap">Engine:</label>
+                  <div className="flex gap-1 flex-1">
+                    {([
+                      { key: "f5tts" as const, label: "F5-TTS", desc: "Voice Clone" },
+                      { key: "bark-openvoice" as const, label: "Bark + OpenVoice", desc: "Expressive" },
+                    ]).map((eng) => (
+                      <button
+                        key={eng.key}
+                        onClick={() => setTtsEngine(eng.key)}
+                        className={`flex-1 rounded-lg px-3 py-2 text-[11px] font-medium transition-colors ${
+                          ttsEngine === eng.key
+                            ? eng.key === "f5tts"
+                              ? "bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30"
+                              : "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/30"
+                            : "bg-white/5 text-muted hover:bg-white/10"
+                        }`}
+                      >
+                        <div>{eng.label}</div>
+                        <div className="text-[10px] opacity-60">{eng.desc}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Voice Picker */}
@@ -651,12 +875,12 @@ export default function NarrationStudioPage() {
                   {isGeneratingTts ? (
                     <>
                       <RefreshCw size={12} className="animate-spin" />
-                      Generating TTS... ({ttsElapsed}s)
+                      Generating {ttsEngine === "f5tts" ? "F5-TTS" : "Bark+OpenVoice"}... ({ttsElapsed}s)
                     </>
                   ) : (
                     <>
                       <FileAudio size={12} />
-                      Generate TTS
+                      Generate TTS ({ttsEngine === "f5tts" ? "F5-TTS" : "Bark+OV"})
                     </>
                   )}
                 </button>
@@ -683,51 +907,166 @@ export default function NarrationStudioPage() {
                 )}
               </div>
 
+              {/* Background Music */}
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Music size={14} className="text-amber-400" />
+                  <span className="text-sm font-medium text-text">Background Music</span>
+                  {selectedBgm && (
+                    <span className="ml-auto text-[10px] text-amber-400/70 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                      {bgmTracks.find((t) => t.key === selectedBgm)?.name ?? selectedBgm}
+                    </span>
+                  )}
+                </div>
+
+                {/* Category Tabs */}
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {["All", ...new Set(bgmTracks.map((t) => t.category))].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setBgmCategory(cat)}
+                      className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                        bgmCategory === cat
+                          ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
+                          : "bg-white/5 text-muted hover:bg-white/10"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                {/* No BGM option */}
+                <button
+                  onClick={() => setSelectedBgm(null)}
+                  className={`w-full mb-2 rounded-lg px-3 py-2 text-xs font-medium text-left transition-colors ${
+                    !selectedBgm
+                      ? "bg-white/10 text-white ring-1 ring-white/20"
+                      : "bg-white/[0.03] text-muted hover:bg-white/[0.06]"
+                  }`}
+                >
+                  No Background Music
+                </button>
+
+                {/* Track List */}
+                <div className="max-h-[200px] overflow-y-auto space-y-1 scrollbar-thin">
+                  {bgmTracks
+                    .filter((t) => bgmCategory === "All" || t.category === bgmCategory)
+                    .map((track) => (
+                      <div
+                        key={track.key}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors cursor-pointer ${
+                          selectedBgm === track.key
+                            ? "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20"
+                            : "bg-white/[0.03] text-muted hover:bg-white/[0.06]"
+                        }`}
+                        onClick={() => {
+                          if (track.hasTrack) setSelectedBgm(track.key);
+                        }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white/90 truncate">{track.name}</div>
+                          <div className="text-[10px] opacity-60">{track.category} · {track.mood.join(", ")}</div>
+                        </div>
+
+                        {track.hasTrack ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const audio = bgmAudioRef.current;
+                              if (!audio) return;
+                              if (bgmPlaying === track.key) {
+                                audio.pause();
+                                setBgmPlaying(null);
+                              } else {
+                                audio.src = `/api/media/bgm/${track.key}/track.mp3`;
+                                audio.volume = Math.min(bgmVolume * 3, 1.0);
+                                audio.play().catch(() => {});
+                                setBgmPlaying(track.key);
+                              }
+                            }}
+                            className="flex-shrink-0 p-1 rounded hover:bg-white/10 text-amber-400"
+                            title={bgmPlaying === track.key ? "Pause" : "Preview"}
+                          >
+                            {bgmPlaying === track.key ? <Pause size={10} /> : <Play size={10} />}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadBgm(track.key);
+                            }}
+                            disabled={bgmDownloading === track.key}
+                            className="flex-shrink-0 p-1 rounded hover:bg-white/10 text-blue-400 disabled:opacity-50"
+                            title="Download"
+                          >
+                            {bgmDownloading === track.key ? (
+                              <Loader2 size={10} className="animate-spin" />
+                            ) : (
+                              <CloudDownload size={10} />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                </div>
+
+                {/* Volume Control */}
+                {selectedBgm && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <label className="text-[10px] text-muted whitespace-nowrap">BGM Vol:</label>
+                    <input
+                      type="range"
+                      min={0} max={0.5} step={0.01}
+                      value={bgmVolume}
+                      onChange={(e) => setBgmVolume(parseFloat(e.target.value))}
+                      className="flex-1 accent-amber-500"
+                    />
+                    <span className="text-[10px] text-muted w-8 text-right">{bgmVolume.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <audio
+                  ref={bgmAudioRef}
+                  onEnded={() => setBgmPlaying(null)}
+                  onPause={() => setBgmPlaying(null)}
+                />
+              </div>
+
               {/* Compose Section */}
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <AudioWaveform size={14} className="text-green-400" />
-                  <span className="text-sm font-medium text-white">Compose & Export</span>
+                  <span className="text-sm font-medium text-text">Compose & Export</span>
                 </div>
 
-                {/* Sync Preview */}
+                {/* Sync Preview — inline video + synced audio */}
                 {selectedJob.silentVideoUrl && audioUrl && (
                   <div className="mb-4">
-                    <button
-                      onClick={handleSyncPreview}
-                      className="flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-2 text-xs text-muted hover:bg-white/[0.1] hover:text-white transition-colors"
-                    >
-                      {isSyncPlaying ? <Pause size={12} /> : <Play size={12} />}
-                      Preview Sync (Video + Audio)
-                    </button>
-                    {/* Hidden sync elements */}
-                    <video
-                      ref={syncVideoRef}
-                      src={selectedJob.silentVideoUrl}
-                      className="hidden"
-                      onEnded={() => setIsSyncPlaying(false)}
-                    />
+                    <div className="rounded-lg overflow-hidden bg-black/30">
+                      <video
+                        ref={syncVideoRef}
+                        src={selectedJob.silentVideoUrl}
+                        muted
+                        className="w-full max-h-[240px] rounded-lg bg-black"
+                        onEnded={() => {
+                          setIsSyncPlaying(false);
+                          if (syncAudioRef.current) syncAudioRef.current.pause();
+                        }}
+                      />
+                    </div>
                     <audio
                       ref={syncAudioRef}
                       src={audioUrl}
                       onEnded={() => setIsSyncPlaying(false)}
                     />
-                    {isSyncPlaying && (
-                      <div className="mt-2 rounded-lg overflow-hidden">
-                        <video
-                          src={selectedJob.silentVideoUrl}
-                          ref={(el) => {
-                            if (el && syncVideoRef.current) {
-                              // Mirror the sync video's playback
-                              el.currentTime = syncVideoRef.current.currentTime;
-                              el.play();
-                            }
-                          }}
-                          muted
-                          className="w-full max-h-[240px] rounded-lg bg-black"
-                        />
-                      </div>
-                    )}
+                    <button
+                      onClick={handleSyncPreview}
+                      className="mt-2 flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-2 text-xs text-muted hover:bg-white/[0.1] hover:text-white transition-colors"
+                    >
+                      {isSyncPlaying ? <Pause size={12} /> : <Play size={12} />}
+                      {isSyncPlaying ? "Pause Sync Preview" : "Play Sync Preview (Video + Audio)"}
+                    </button>
                   </div>
                 )}
 

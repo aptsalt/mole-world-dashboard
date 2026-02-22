@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { getVideos } from "@/lib/api";
+import { SkeletonStatRow, SkeletonGrid, SkeletonLine, SkeletonBlock } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -673,11 +675,47 @@ export default function VideosPage() {
 
   if (loading && !stats) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <RefreshCw size={24} className="animate-spin text-cyan" />
-          <span className="text-sm text-muted">Loading videos...</span>
+      <div className="flex flex-col gap-5 p-6 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="skeleton w-6 h-6 rounded" />
+              <SkeletonLine className="w-36 h-5" />
+            </div>
+            <SkeletonLine className="w-56 h-3" />
+          </div>
+          <div className="flex items-center gap-3">
+            <SkeletonBlock className="w-28 h-8 rounded-lg" />
+            <SkeletonBlock className="w-20 h-8 rounded-lg" />
+          </div>
         </div>
+        {/* Stats bar */}
+        <div className="glass p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <SkeletonLine className="w-32 h-4" />
+            <SkeletonLine className="w-10 h-3" />
+          </div>
+          <SkeletonBlock className="h-2 w-full" />
+          <div className="flex gap-6">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="text-center space-y-1">
+                <SkeletonLine className="w-8 h-5 mx-auto" />
+                <SkeletonLine className="w-16 h-2" />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Filter bar */}
+        <div className="flex gap-2">
+          {Array.from({ length: 4 }, (_, i) => (
+            <SkeletonBlock key={i} className="h-8 w-24 rounded-full" />
+          ))}
+          <div className="flex-1" />
+          <SkeletonBlock className="h-8 w-40 rounded-lg" />
+        </div>
+        {/* Video grid */}
+        <SkeletonGrid count={10} cols={5} />
       </div>
     );
   }
@@ -749,19 +787,16 @@ export default function VideosPage() {
 
       {/* Content */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Clock size={40} className="text-muted/20 mb-3" />
-          <p className="text-sm text-muted">
-            {videos.length === 0
+        <EmptyState
+          icon={Clock}
+          title={
+            videos.length === 0
               ? "No videos generated yet — batch is running..."
-              : "No videos match the current filters"}
-          </p>
-          {videos.length === 0 && (
-            <p className="mt-1 text-xs text-muted/50">
-              Auto-refreshing every 15 seconds
-            </p>
-          )}
-        </div>
+              : "No videos match the current filters"
+          }
+          description={videos.length === 0 ? "Auto-refreshing every 15 seconds" : undefined}
+          className="py-20"
+        />
       ) : groupByShot ? (
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {Array.from(shotGroups.entries()).map(([shotId, group]) => (

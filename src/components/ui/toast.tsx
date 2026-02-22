@@ -40,11 +40,11 @@ const ICONS = {
 export function ToastContainer() {
   const { toasts } = useToastStore();
   return (
-    <div className="toast-container">
+    <div className="toast-container" role="status" aria-live="polite">
       {toasts.map((t) => {
         const Icon = ICONS[t.type];
         return (
-          <div key={t.id} className={`toast ${t.type}`}>
+          <div key={t.id} role="alert" className={`toast ${t.type}`}>
             <Icon size={16} />
             <span>{t.message}</span>
           </div>

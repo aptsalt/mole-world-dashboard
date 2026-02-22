@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useDashboardStore } from "@/lib/store";
 import { formatDuration, getSceneColor } from "@/lib/utils";
-import { getLogs, getWhatsAppJobs } from "@/lib/api";
+import { getLogs } from "@/lib/api";
 import type { RenderStats } from "@/lib/types";
 import Link from "next/link";
 import {
   Film, Layers,
-  Zap, Clock, HardDrive, TrendingUp, Sun, Moon, Sunset,
-  Play, FolderOpen, FileText, Search, Activity,
-  Gauge, Lightbulb, ArrowUpRight, Flame,
-  Monitor, Image as ImageIcon, Video, BookOpen,
-  CheckCircle2, XCircle, ChevronDown, ChevronUp, Maximize2,
+  Zap, Clock, Play, FolderOpen, FileText, Search, Activity,
+  Lightbulb, ArrowUpRight, Flame,
+  Monitor,
 } from "lucide-react";
 import { QuickNotes } from "@/components/ui/quick-notes";
 import { Confetti } from "@/components/ui/confetti";
@@ -21,14 +19,14 @@ import {
   CartesianGrid, Legend,
 } from "recharts";
 
-// ── Helpers ──────────────────────────────────────────
+// ── Extracted components ─────────────────────────────
+import { GreetingBanner } from "@/components/dashboard/greeting-banner";
+import { HiggsTab } from "@/components/dashboard/higgs-tab";
+import { ProductionSummary } from "@/components/dashboard/production-summary";
+import { PipelineHealthGauge } from "@/components/dashboard/pipeline-health";
+import { GpuStatsWidget } from "@/components/dashboard/gpu-stats";
 
-function getGreeting(): { text: string; icon: typeof Sun } {
-  const h = new Date().getHours();
-  if (h < 12) return { text: "Good morning", icon: Sun };
-  if (h < 17) return { text: "Good afternoon", icon: Sunset };
-  return { text: "Good evening", icon: Moon };
-}
+// ── Helpers ──────────────────────────────────────────
 
 function buildChartData(stats: RenderStats | null) {
   if (!stats) return [];
@@ -55,47 +53,11 @@ function buildChartData(stats: RenderStats | null) {
   return Array.from(map.values()).sort((a, b) => a.shot.localeCompare(b.shot));
 }
 
+// ── Types ────────────────────────────────────────────
+
+type DashboardTab = "local" | "higgs";
+
 // ── Sub-components ───────────────────────────────────
-
-function GreetingBanner({ v1Done, v2Done, narDone, v1Total, v2Total, narTotal }: {
-  v1Done: number; v2Done: number; narDone: number;
-  v1Total: number; v2Total: number; narTotal: number;
-}) {
-  const { text, icon: Icon } = getGreeting();
-  const totalDone = v1Done + v2Done + narDone;
-  const totalAll = v1Total + v2Total + narTotal;
-  const healthPct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
-
-  return (
-    <div className="glass glow-cyan border-shimmer p-5">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan/10">
-            <Icon size={20} className="text-cyan" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">{text}</h1>
-            <p className="text-xs text-muted">The Mole World — Chapter 1 Production</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-6 text-xs">
-          <div className="text-center">
-            <p className="text-lg font-bold text-success number-pop">{totalDone}</p>
-            <p className="text-muted">Complete</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-amber number-pop">{totalAll - totalDone}</p>
-            <p className="text-muted">Remaining</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-cyan number-pop">{healthPct}%</p>
-            <p className="text-muted">Health</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function OverallProgressRing({ pct }: { pct: number }) {
   const r = 54;
@@ -210,52 +172,6 @@ function QuickActions() {
   );
 }
 
-function GpuStatsWidget() {
-  return (
-    <div className="glass p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <Gauge size={14} className="text-cyan" />
-        <h3 className="text-sm font-semibold text-white section-heading">GPU Stats</h3>
-        <span className="ml-auto text-[10px] text-success font-semibold uppercase">Online</span>
-      </div>
-      <div className="space-y-3">
-        {[
-          { label: "VRAM Usage", value: 78, max: "16 GB", color: "var(--cyan)" },
-          { label: "GPU Utilization", value: 92, max: "100%", color: "#22c55e" },
-          { label: "Temperature", value: 68, max: "90\u00b0C", color: value68Color(68) },
-          { label: "Power Draw", value: 85, max: "450W", color: "#f59e0b" },
-        ].map((stat) => (
-          <div key={stat.label}>
-            <div className="flex justify-between text-[10px] mb-1">
-              <span className="text-muted">{stat.label}</span>
-              <span className="font-mono" style={{ color: stat.color }}>{stat.value}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-1000"
-                style={{ width: `${stat.value}%`, background: stat.color }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center gap-3 text-[10px] text-muted border-t border-white/[0.04] pt-3">
-        <span>RTX 4090</span>
-        <span className="text-white/20">|</span>
-        <span>CUDA 12.x</span>
-        <span className="text-white/20">|</span>
-        <span>16 GB VRAM</span>
-      </div>
-    </div>
-  );
-}
-
-function value68Color(temp: number): string {
-  if (temp < 60) return "#22c55e";
-  if (temp < 80) return "#f59e0b";
-  return "#ef4444";
-}
-
 function RenderQueueWidget({ stats }: { stats: RenderStats | null }) {
   const queue = [
     { shot: "P1_S04_001", phase: "v2", priority: "high" },
@@ -268,7 +184,7 @@ function RenderQueueWidget({ stats }: { stats: RenderStats | null }) {
     <div className="glass p-5">
       <div className="flex items-center gap-2 mb-3">
         <Layers size={14} className="text-amber" />
-        <h3 className="text-sm font-semibold text-white section-heading">Render Queue</h3>
+        <h3 className="text-sm font-semibold text-text section-heading">Render Queue</h3>
         <span className="ml-auto badge badge-v2">{queue.length} queued</span>
       </div>
       <div className="space-y-1.5 stagger-list">
@@ -277,7 +193,7 @@ function RenderQueueWidget({ stats }: { stats: RenderStats | null }) {
             <span className="text-xs text-muted font-mono w-4">{i + 1}</span>
             <code className="text-xs font-mono text-white flex-1">{item.shot}</code>
             <span className="badge badge-v2">{item.phase}</span>
-            <span className={`text-[9px] font-semibold uppercase ${
+            <span className={`text-[10px] font-semibold uppercase ${
               item.priority === "high" ? "text-error" :
               item.priority === "normal" ? "text-cyan" : "text-muted"
             }`}>
@@ -286,35 +202,6 @@ function RenderQueueWidget({ stats }: { stats: RenderStats | null }) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function ProductionSummary({ totalRenders, totalHours, avgSeconds, diskMb }: {
-  totalRenders: number; totalHours: number; avgSeconds: number; diskMb: number;
-}) {
-  const items = [
-    { label: "Total Renders", value: `${totalRenders}`, icon: <Zap size={18} className="text-cyan" />, color: "var(--cyan)" },
-    { label: "Render Time", value: `${totalHours.toFixed(1)}h`, icon: <Clock size={18} className="text-amber" />, color: "#ff6b35" },
-    { label: "Avg Per Clip", value: formatDuration(avgSeconds), icon: <TrendingUp size={18} className="text-success" />, color: "#22c55e" },
-    { label: "Disk Usage", value: `${diskMb.toFixed(1)} MB`, icon: <HardDrive size={18} className="text-violet-400" />, color: "#8b5cf6" },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-      {items.map((item) => (
-        <div key={item.label} className="glass stat-card p-4 group">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] group-hover:bg-white/[0.06] transition-colors">
-              {item.icon}
-            </div>
-            <div>
-              <p className="text-xs text-muted">{item.label}</p>
-              <p className="text-lg font-bold text-white number-pop">{item.value}</p>
-            </div>
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
@@ -375,22 +262,10 @@ function PipelineBar({ label, done, total, color }: { label: string; done: numbe
   );
 }
 
-function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
-      <div className="flex items-center gap-2">
-        {icon}
-        <span className="text-xs text-muted">{label}</span>
-      </div>
-      <span className="text-sm font-semibold text-white">{value}</span>
-    </div>
-  );
-}
-
 function ShotMap({ clips }: { clips: { shot_id: string; scene_id: string; has_clip: boolean }[] }) {
   return (
     <div className="glass p-5">
-      <h3 className="text-sm font-semibold text-white mb-3 section-heading">Shot Map</h3>
+      <h3 className="text-sm font-semibold text-text mb-3 section-heading">Shot Map</h3>
       <div className="flex flex-wrap gap-1.5">
         {clips.map((c) => (
           <div
@@ -415,7 +290,7 @@ function ShotMap({ clips }: { clips: { shot_id: string; scene_id: string; has_cl
 function FilmTimeline({ clips }: { clips: { shot_id: string; scene_id: string; has_clip: boolean }[] }) {
   return (
     <div className="glass p-5">
-      <h3 className="text-sm font-semibold text-white mb-3 section-heading">Film Timeline</h3>
+      <h3 className="text-sm font-semibold text-text mb-3 section-heading">Film Timeline</h3>
       <div className="flex gap-0.5 h-10 items-end">
         {clips.map((c) => (
           <div
@@ -447,61 +322,6 @@ function FilmTimeline({ clips }: { clips: { shot_id: string; scene_id: string; h
   );
 }
 
-function PipelineHealthGauge({ v1Pct, v2Pct, narPct }: { v1Pct: number; v2Pct: number; narPct: number }) {
-  const completion = Math.round((v1Pct + v2Pct + narPct) / 3);
-  const speed = 78;
-  const consistency = 85;
-  const overall = Math.round((completion + speed + consistency) / 3);
-  const color = overall >= 80 ? "#22c55e" : overall >= 50 ? "#eab308" : "#ef4444";
-
-  const r = 40;
-  const circ = Math.PI * r;
-  const offset = circ - (overall / 100) * circ;
-
-  return (
-    <div className="glass p-5">
-      <h3 className="text-sm font-semibold text-white mb-4 section-heading">Pipeline Health</h3>
-      <div className="flex items-center gap-6">
-        <div className="relative shrink-0">
-          <svg width="100" height="56" viewBox="0 0 100 56">
-            <path
-              d="M 10 50 A 40 40 0 0 1 90 50"
-              fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" strokeLinecap="round"
-            />
-            <path
-              d="M 10 50 A 40 40 0 0 1 90 50"
-              fill="none" stroke={color} strokeWidth="6" strokeLinecap="round"
-              strokeDasharray={circ}
-              strokeDashoffset={offset}
-              style={{ transition: "stroke-dashoffset 1s ease" }}
-            />
-          </svg>
-          <div className="absolute inset-x-0 bottom-0 text-center">
-            <span className="text-xl font-bold" style={{ color }}>{overall}</span>
-          </div>
-        </div>
-        <div className="flex-1 space-y-2">
-          {[
-            { label: "Completion", value: completion, color: "#22c55e" },
-            { label: "Speed", value: speed, color: "var(--cyan)" },
-            { label: "Consistency", value: consistency, color: "#8b5cf6" },
-          ].map((f) => (
-            <div key={f.label}>
-              <div className="flex justify-between text-[10px] mb-0.5">
-                <span className="text-muted">{f.label}</span>
-                <span style={{ color: f.color }}>{f.value}%</span>
-              </div>
-              <div className="h-1 rounded-full bg-white/[0.06]">
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${f.value}%`, background: f.color }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SceneBreakdown({ clips }: { clips: { scene_id: string; has_clip: boolean }[] }) {
   const sceneMap = new Map<string, { total: number; done: number }>();
   for (const c of clips) {
@@ -514,7 +334,7 @@ function SceneBreakdown({ clips }: { clips: { scene_id: string; has_clip: boolea
 
   return (
     <div className="glass p-5">
-      <h3 className="text-sm font-semibold text-white mb-3 section-heading">Scene Breakdown</h3>
+      <h3 className="text-sm font-semibold text-text mb-3 section-heading">Scene Breakdown</h3>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
         {scenes.map(([sceneId, { total, done }]) => {
           const pct = Math.round((done / total) * 100);
@@ -538,7 +358,7 @@ function SceneBreakdown({ clips }: { clips: { scene_id: string; has_clip: boolea
                   <span className="text-[8px] font-bold text-white">{done}/{total}</span>
                 </div>
               </div>
-              <span className="text-[9px] text-muted font-mono">{sceneId.replace("P1_", "")}</span>
+              <span className="text-[10px] text-muted font-mono">{sceneId.replace("P1_", "")}</span>
             </div>
           );
         })}
@@ -564,7 +384,7 @@ function ProductionMilestones({ v1Done, v2Done, narDone, v1Total, v2Total }: {
 
   return (
     <div className="glass p-5">
-      <h3 className="text-sm font-semibold text-white mb-4 section-heading">Production Milestones</h3>
+      <h3 className="text-sm font-semibold text-text mb-4 section-heading">Production Milestones</h3>
       <div className="relative">
         <div className="h-1 bg-white/[0.06] rounded-full">
           <div className="h-full bg-cyan rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
@@ -591,7 +411,7 @@ function ActivityFeed({ entries }: { entries: string[] }) {
     <div className="glass p-5">
       <div className="flex items-center gap-2 mb-3">
         <Activity size={14} className="text-cyan" />
-        <h3 className="text-sm font-semibold text-white section-heading">Activity Feed</h3>
+        <h3 className="text-sm font-semibold text-text section-heading">Activity Feed</h3>
       </div>
       <div className="space-y-1 font-mono text-xs max-h-[240px] overflow-y-auto stagger-list">
         {entries.slice(0, 12).map((line, i) => (
@@ -639,10 +459,10 @@ function FileSizeCard({ label, count, totalMb, avgKb, color }: {
         <div className="h-2 w-2 rounded-full" style={{ background: color }} />
         <span className="text-xs font-medium text-muted uppercase tracking-wider">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-white">{totalMb.toFixed(1)} MB</p>
+      <p className="text-2xl font-bold text-text">{totalMb.toFixed(1)} MB</p>
       <div className="mt-2 flex items-center gap-3 text-xs text-muted">
         <span>{count} files</span>
-        <span className="text-white/20">|</span>
+        <span className="text-white/50">|</span>
         <span>avg {avgKb.toFixed(0)} KB</span>
       </div>
     </div>
@@ -690,7 +510,7 @@ function PipelineInsights({ v1Done, v2Done, narDone, v1Total, v2Total, narTotal 
     <div className="glass p-5">
       <div className="flex items-center gap-2 mb-4">
         <Lightbulb size={14} className="text-warning" />
-        <h3 className="text-sm font-semibold text-white section-heading">Pipeline Insights</h3>
+        <h3 className="text-sm font-semibold text-text section-heading">Pipeline Insights</h3>
         <span className="ml-auto text-[10px] text-muted">AI Analysis</span>
       </div>
       <div className="space-y-2">
@@ -723,7 +543,7 @@ function V2EnhancementTracker({ clips }: { clips: { shot_id: string; scene_id: s
     <div className="glass p-5">
       <div className="flex items-center gap-2 mb-4">
         <Flame size={14} className="text-amber" />
-        <h3 className="text-sm font-semibold text-white section-heading">V2 Enhancement Tracker</h3>
+        <h3 className="text-sm font-semibold text-text section-heading">V2 Enhancement Tracker</h3>
       </div>
 
       {/* Stacked bar */}
@@ -813,7 +633,7 @@ function RenderHeatmap({ stats }: { stats: RenderStats | null }) {
     <div className="glass p-5">
       <div className="flex items-center gap-2 mb-4">
         <Activity size={14} className="text-cyan" />
-        <h3 className="text-sm font-semibold text-white section-heading">Render Heatmap</h3>
+        <h3 className="text-sm font-semibold text-text section-heading">Render Heatmap</h3>
         <span className="ml-auto text-[10px] text-muted">By render duration</span>
       </div>
       <div className="grid grid-cols-7 gap-1.5">
@@ -858,284 +678,6 @@ function DashboardSkeleton() {
   );
 }
 
-// ── Higgs Tab Types ──────────────────────────────────
-
-interface HiggsJob {
-  id: string;
-  type: string;
-  description: string;
-  enhancedPrompt: string | null;
-  status: string;
-  outputPaths: string[];
-  error: string | null;
-  createdAt: string;
-  completedAt: string | null;
-}
-
-type DashboardTab = "local" | "higgs";
-type HiggsFilter = "all" | "image" | "clip" | "lesson" | "news-content";
-
-function mediaUrl(outputPath: string): string {
-  const filename = outputPath.split("/").pop() ?? "";
-  return `/api/whatsapp/media?file=${encodeURIComponent(filename)}`;
-}
-
-function relativeTimeShort(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
-function HiggsCard({ job, typeColors, typeLabels, expandedJob, onToggle }: {
-  job: HiggsJob;
-  typeColors: Record<string, string>;
-  typeLabels: Record<string, string>;
-  expandedJob: string | null;
-  onToggle: (id: string | null) => void;
-}) {
-  const [hovering, setHovering] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const isExpanded = expandedJob === job.id;
-  const hasOutput = job.outputPaths.length > 0;
-  const firstOutput = hasOutput ? job.outputPaths[0] : null;
-  const isVideo = firstOutput?.endsWith(".mp4") ?? false;
-  const color = typeColors[job.type] ?? "#6b7280";
-
-  useEffect(() => {
-    if (!isVideo) return;
-    if (hovering && videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
-    } else if (!hovering && videoRef.current) {
-      videoRef.current.pause();
-    }
-  }, [hovering, isVideo]);
-
-  return (
-    <div
-      className={`group relative overflow-hidden rounded-xl border bg-white/[0.04] transition-all hover:border-white/[0.12] ${
-        isExpanded ? "border-cyan/30" : "border-white/[0.10]"
-      }`}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-    >
-      {/* Thumbnail / Preview */}
-      {hasOutput && firstOutput && (
-        <div
-          className="relative aspect-video cursor-pointer bg-black/40"
-          onClick={() => onToggle(isExpanded ? null : job.id)}
-        >
-          {isVideo ? (
-            hovering ? (
-              <video
-                ref={videoRef}
-                src={mediaUrl(firstOutput)}
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Film size={32} className="text-muted/20" />
-              </div>
-            )
-          ) : (
-            <>
-              <img
-                src={mediaUrl(firstOutput)}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover"
-                loading="lazy"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center -z-0">
-                <ImageIcon size={32} className="text-muted/20" />
-              </div>
-            </>
-          )}
-
-          {/* Play overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
-            <div className="rounded-full bg-white/20 p-2 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-              {isVideo ? (
-                <Play size={20} className="text-white" fill="white" />
-              ) : (
-                <Maximize2 size={18} className="text-white" />
-              )}
-            </div>
-          </div>
-
-          {/* Type badge */}
-          <div
-            className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm"
-            style={{ backgroundColor: color + "30", color }}
-          >
-            {typeLabels[job.type] ?? job.type}
-          </div>
-
-          {/* Video indicator */}
-          {isVideo && (
-            <div className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm flex items-center gap-1">
-              <Play size={8} fill="currentColor" />
-              Video
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Info */}
-      <div className="p-3 cursor-pointer" onClick={() => onToggle(isExpanded ? null : job.id)}>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-white line-clamp-1">{job.description}</span>
-        </div>
-        <div className="mt-0.5 text-[11px] text-muted">
-          {relativeTimeShort(job.createdAt)}
-        </div>
-      </div>
-
-      {/* Expanded details */}
-      {isExpanded && (
-        <div className="border-t border-white/[0.08] p-3 space-y-2">
-          {job.enhancedPrompt && (
-            <div>
-              <p className="text-[10px] text-muted uppercase mb-1">Enhanced Prompt</p>
-              <p className="text-xs text-white/60 leading-relaxed">{job.enhancedPrompt}</p>
-            </div>
-          )}
-          {job.outputPaths.length > 1 && (
-            <div className="grid grid-cols-2 gap-1.5 mt-2">
-              {job.outputPaths.map((p, i) => (
-                p.endsWith(".mp4") ? (
-                  <video key={i} src={mediaUrl(p)} className="w-full rounded-lg" controls muted playsInline />
-                ) : (
-                  <img key={i} src={mediaUrl(p)} alt="" className="w-full rounded-lg" loading="lazy" />
-                )
-              ))}
-            </div>
-          )}
-          <p className="text-[9px] text-muted font-mono">{job.id}</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HiggsTab() {
-  const [jobs, setJobs] = useState<HiggsJob[]>([]);
-  const [filter, setFilter] = useState<HiggsFilter>("all");
-  const [expandedJob, setExpandedJob] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchJobs = () => {
-      getWhatsAppJobs()
-        .then((data) => setJobs(Array.isArray(data) ? data as HiggsJob[] : []))
-        .catch(() => {});
-    };
-    fetchJobs();
-    const interval = setInterval(fetchJobs, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const completed = useMemo(() => jobs.filter((j) => j.status === "completed"), [jobs]);
-  const filtered = useMemo(() => {
-    if (filter === "all") return completed;
-    return completed.filter((j) => j.type === filter);
-  }, [completed, filter]);
-
-  const stats = useMemo(() => ({
-    total: completed.length,
-    images: completed.filter((j) => j.type === "image").length,
-    clips: completed.filter((j) => j.type === "clip").length,
-    lessons: completed.filter((j) => j.type === "lesson").length,
-    successRate: jobs.length > 0 ? Math.round((completed.length / jobs.length) * 100) : 0,
-  }), [jobs, completed]);
-
-  const TYPE_COLORS: Record<string, string> = {
-    image: "#f59e0b",
-    clip: "#8b5cf6",
-    lesson: "#10b981",
-    "news-content": "#f97316",
-  };
-
-  const TYPE_LABELS: Record<string, string> = {
-    image: "Image",
-    clip: "Clip",
-    lesson: "Lesson",
-    "news-content": "News",
-  };
-
-  const FILTER_OPTIONS: { key: HiggsFilter; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "image", label: "Images" },
-    { key: "clip", label: "Clips" },
-    { key: "lesson", label: "Lessons" },
-    { key: "news-content", label: "News" },
-  ];
-
-  return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {[
-          { label: "Total Generated", value: stats.total, color: "var(--cyan)", icon: Zap },
-          { label: "Images", value: stats.images, color: "#f59e0b", icon: ImageIcon },
-          { label: "Clips", value: stats.clips, color: "#8b5cf6", icon: Video },
-          { label: "Lessons", value: stats.lessons, color: "#22c55e", icon: BookOpen },
-          { label: "Success Rate", value: `${stats.successRate}%`, color: "var(--success)", icon: CheckCircle2 },
-        ].map((s) => (
-          <div key={s.label} className="glass p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}15` }}>
-              <s.icon size={16} style={{ color: s.color }} />
-            </div>
-            <div>
-              <span className="text-lg font-bold text-white">{s.value}</span>
-              <p className="text-[10px] text-muted">{s.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Filter chips */}
-      <div className="flex gap-2 flex-wrap">
-        {FILTER_OPTIONS.map((opt) => (
-          <button
-            key={opt.key}
-            onClick={() => setFilter(opt.key)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
-              filter === opt.key
-                ? "bg-white/10 text-white border-white/20"
-                : "bg-white/[0.02] text-muted border-white/[0.10] hover:bg-white/[0.05]"
-            }`}
-          >
-            {opt.label}
-            <span className="ml-1.5 text-[10px] opacity-60">
-              {opt.key === "all" ? completed.length : completed.filter((j) => j.type === opt.key).length}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Thumbnail grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {filtered.map((job) => (
-          <HiggsCard key={job.id} job={job} typeColors={TYPE_COLORS} typeLabels={TYPE_LABELS} expandedJob={expandedJob} onToggle={setExpandedJob} />
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="py-12 text-center text-sm text-muted">
-          No generated content yet
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Main Page ────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -1163,6 +705,8 @@ export default function DashboardPage() {
     }
   }, [v1Done, v1Total, confettiShown]);
 
+  const chartData = useMemo(() => buildChartData(stats), [stats]);
+
   if (isLoading && !status) return <DashboardSkeleton />;
 
   const v2Done = status?.v2?.done ?? 0;
@@ -1182,8 +726,6 @@ export default function DashboardPage() {
   const v2Pct = v2Total > 0 ? Math.round((v2Done / v2Total) * 100) : 0;
   const narPct = narTotal > 0 ? Math.round((narDone / narTotal) * 100) : 0;
   const overallPct = Math.round((v1Pct + v2Pct + narPct) / 3);
-
-  const chartData = buildChartData(stats);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -1235,7 +777,7 @@ export default function DashboardPage() {
           status={v1Done >= v1Total ? "done" : "active"} />
         <PhaseCard label="V2 Enhanced" done={v2Done} total={v2Total} color="#ff6b35"
           status={v2Done < v2Total ? "active" : "done"} />
-        <PhaseCard label="Narration" done={narDone} total={narTotal} color="#22c55e"
+        <PhaseCard label="Narration" done={narDone} total={narTotal} color="var(--success)"
           status={narDone >= narTotal ? "done" : "idle"} />
       </div>
 
@@ -1266,12 +808,12 @@ export default function DashboardPage() {
       {/* Pipeline Progress + GPU Stats */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="glass p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-white mb-5 section-heading">Pipeline Progress</h3>
+          <h3 className="text-sm font-semibold text-text mb-5 section-heading">Pipeline Progress</h3>
           <div className="space-y-5">
             <PipelineBar label="V1 Standard" done={v1Done} total={v1Total} color="#3b82f6" />
             <PipelineBar label="V2 Enhanced" done={v2Done} total={v2Total} color="#ff6b35" />
-            <PipelineBar label="Narration" done={narDone} total={narTotal} color="#22c55e" />
-            <PipelineBar label="Composite" done={compDone} total={v1Total} color="#f59e0b" />
+            <PipelineBar label="Narration" done={narDone} total={narTotal} color="var(--success)" />
+            <PipelineBar label="Composite" done={compDone} total={v1Total} color="var(--warning)" />
           </div>
         </div>
         <GpuStatsWidget />
@@ -1301,7 +843,7 @@ export default function DashboardPage() {
       {/* Render Performance Chart */}
       <div className="glass p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-white section-heading">Render Performance</h3>
+          <h3 className="text-sm font-semibold text-text section-heading">Render Performance</h3>
           <span className="text-xs text-muted">Per-clip render time (minutes)</span>
         </div>
         <div className="h-80">
@@ -1310,7 +852,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis
                 dataKey="shot"
-                tick={{ fill: "#94a3b8", fontSize: 10 }}
+                tick={{ fill: "var(--muted)", fontSize: 11 }}
                 angle={-45}
                 textAnchor="end"
                 height={60}
@@ -1318,12 +860,12 @@ export default function DashboardPage() {
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
+                tick={{ fill: "var(--muted)", fontSize: 11 }}
                 axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-              <Legend wrapperStyle={{ fontSize: 12, color: "#94a3b8" }} />
+              <Legend wrapperStyle={{ fontSize: 12, color: "var(--muted)" }} />
               <Bar dataKey="v1" name="V1 Standard" fill="#3b82f6" radius={[3, 3, 0, 0]} />
               <Bar dataKey="v2" name="V2 Enhanced" fill="var(--cyan)" radius={[3, 3, 0, 0]} />
             </BarChart>
@@ -1355,7 +897,7 @@ export default function DashboardPage() {
           count={stats?.audio_file_sizes?.count ?? 0}
           totalMb={stats?.audio_file_sizes?.total_mb ?? 0}
           avgKb={stats?.audio_file_sizes?.avg_kb ?? 0}
-          color="#22c55e" />
+          color="var(--success)" />
       </div>
 
       {/* Pipeline Insights */}

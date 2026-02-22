@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -42,7 +42,7 @@ interface PostCardProps {
   onDuplicate?: () => void;
 }
 
-export default function PostCard({
+const PostCard = memo(function PostCard({
   post,
   platformKey,
   compact,
@@ -309,7 +309,9 @@ export default function PostCard({
       </div>
     </div>
   );
-}
+});
+
+export default PostCard;
 
 function getOverallStatus(post: ContentPost): string {
   const statuses = Object.values(post.platforms).map((p) => p.status);

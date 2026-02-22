@@ -5,7 +5,6 @@ import { Menu, X, ArrowUp } from "lucide-react";
 import { clsx } from "clsx";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
-import { ThemeProvider } from "./theme-provider";
 import { Screensaver } from "@/components/ui/screensaver";
 import { MiniPlayer, MiniPlayerProvider } from "@/components/ui/mini-player";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
@@ -33,9 +32,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeProvider>
     <MiniPlayerProvider>
     <div className="flex h-screen overflow-hidden">
+      {/* Skip to content */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[999] focus:rounded-lg focus:bg-cyan focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-bg"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -72,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Page content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main id="main-content" ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>
       </div>
@@ -113,6 +119,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Screensaver />
     </div>
     </MiniPlayerProvider>
-    </ThemeProvider>
   );
 }

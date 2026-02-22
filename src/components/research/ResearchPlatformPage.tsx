@@ -136,12 +136,12 @@ export default function ResearchPlatformPage({
     : "never";
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center", `bg-${iconColor}/20`)}>
-            <Icon size={20} className={iconColor} />
+          <div className={clsx("w-8 h-8 rounded-xl flex items-center justify-center", `bg-${iconColor}/20`)}>
+            <Icon size={16} className={iconColor} />
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">{label}</h2>

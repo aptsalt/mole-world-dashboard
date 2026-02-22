@@ -1,387 +1,395 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  Cog, Monitor, Cpu, HardDrive, Palette, Info,
-  Film, Zap, Box, Code2, Bell, Eye, RefreshCw,
-  Keyboard, Moon, Volume2, Shield, Download,
+  Settings,
+  Palette,
+  Gauge,
+  Wifi,
+  Info,
+  Check,
+  RefreshCw,
+  Terminal,
+  Film,
+  Loader2,
+  Sparkles,
+  Trash2,
 } from "lucide-react";
-import { openShortcuts } from "@/components/ui/keyboard-shortcuts";
+import { useDashboardStore } from "@/lib/store";
+import { useToastStore } from "@/components/ui/toast";
+import { resetOnboarding } from "@/components/ui/onboarding";
 
-const PIPELINE_CONFIG = {
-  output_dir: "C:\\Users\\deepc\\film-pipeline\\output",
-  model: "WanVideo 2.1 (14B parameters)",
-  resolution: "832x480",
-  fps: 24,
-  frames: 81,
-  seed_strategy: "random",
-  style_prefix: "cinematic composition, masterful cinematography, film grain, realistic lighting",
-  v1_steps: 30,
-  v2_steps: 40,
-  v2_cfg_scale: 7.5,
-};
+// ── Theme definitions (sourced from globals.css [data-theme=...]) ──
 
-const SYSTEM_INFO = [
-  { label: "Platform", value: "Windows 11 + NVIDIA RTX 4090", icon: Monitor },
-  { label: "GPU", value: "RTX 4090 \u00b7 16GB VRAM \u00b7 CUDA 12.x", icon: Cpu },
-  { label: "Storage", value: "NVMe SSD \u00b7 ~92 MB pipeline output", icon: HardDrive },
-  { label: "Dashboard", value: "v2.0.0 (Next.js 16.1)", icon: Code2 },
-  { label: "AI Model", value: "WanVideo 2.1 via ComfyUI", icon: Box },
-  { label: "Framework", value: "Next.js 16 + TypeScript + Tailwind v4", icon: Zap },
+const THEMES = [
+  {
+    id: "dark",
+    label: "Cool Navy",
+    description: "Default dashboard theme",
+    swatches: {
+      bg: "#1f2435",
+      card: "#313a52",
+      cyan: "#7dd3fc",
+      accent: "#a5b4fc",
+      amber: "#fcd34d",
+      text: "#dce4f8",
+      muted: "#a0aed0",
+    },
+  },
+  {
+    id: "slate",
+    label: "Warm Slate",
+    description: "Higgsfield production palette",
+    swatches: {
+      bg: "#2b2d3e",
+      card: "#3a3d52",
+      cyan: "#89b4fa",
+      accent: "#b4befe",
+      amber: "#fab387",
+      text: "#e2e5f0",
+      muted: "#b0b5cc",
+    },
+  },
+  {
+    id: "charcoal",
+    label: "Soft Charcoal",
+    description: "Distribution hub palette",
+    swatches: {
+      bg: "#2e3045",
+      card: "#43465e",
+      cyan: "#c4b5fd",
+      accent: "#f0abfc",
+      amber: "#fbbf24",
+      text: "#e8eaf4",
+      muted: "#b8bdd4",
+    },
+  },
+  {
+    id: "light",
+    label: "Light Mode",
+    description: "Clean light appearance",
+    swatches: {
+      bg: "#f8fafc",
+      card: "#ffffff",
+      cyan: "#0284c7",
+      accent: "#6366f1",
+      amber: "#d97706",
+      text: "#1e293b",
+      muted: "#475569",
+    },
+  },
+] as const;
+
+// ── Refresh interval options ─────────────────────────────────
+
+const REFRESH_OPTIONS = [
+  { label: "5s", ms: 5000 },
+  { label: "10s", ms: 10000 },
+  { label: "15s", ms: 15000 },
+  { label: "30s", ms: 30000 },
+  { label: "60s", ms: 60000 },
+] as const;
+
+// ── API health-check endpoints ───────────────────────────────
+
+const ENDPOINTS = [
+  { label: "Pipeline API", url: "/api/pipeline/api/status" },
+  { label: "Automation", url: "/api/automation/status" },
+  { label: "Orchestrate", url: "/api/orchestrate/status" },
+  { label: "Voices", url: "/api/voices" },
+] as const;
+
+type EndpointStatus = "unknown" | "checking" | "ok" | "error";
+
+// ── CLI commands (mirrors production page) ───────────────────
+
+const CLI_COMMANDS = [
+  { cmd: "npx tsx src/index.ts start", desc: "Start automation (opens browser)" },
+  { cmd: "npx tsx src/index.ts start --headless", desc: "Run headless overnight" },
+  { cmd: "npx tsx src/index.ts status", desc: "Check current status" },
+  { cmd: "npx tsx src/index.ts queue-add --all", desc: "Load 89 shots into queue" },
+  { cmd: "npm run batch-video:dry", desc: "Preview batch video plan" },
+  { cmd: "npm run batch-video", desc: "Generate 3 videos per shot (Hailuo, Kling, Seedance)" },
 ];
 
-const COLORS = [
-  { name: "Cyan", var: "--cyan" },
-  { name: "Accent", var: "--accent" },
-  { name: "Amber", var: "--amber" },
-  { name: "Lime", var: "--lime" },
-  { name: "Success", var: "--success" },
-  { name: "Warning", var: "--warning" },
-  { name: "Error", var: "--error" },
-  { name: "Background", var: "--bg" },
-  { name: "Card", var: "--bg-card" },
-  { name: "Text", var: "--text" },
-  { name: "Muted", var: "--muted" },
-];
-
-interface Preferences {
-  autoRefresh: boolean;
-  autoRefreshInterval: number;
-  notifications: boolean;
-  soundEffects: boolean;
-  animations: boolean;
-  screensaver: boolean;
-  screensaverDelay: number;
-  compactMode: boolean;
-  showConfetti: boolean;
-}
-
-const DEFAULT_PREFS: Preferences = {
-  autoRefresh: true,
-  autoRefreshInterval: 30,
-  notifications: true,
-  soundEffects: false,
-  animations: true,
-  screensaver: true,
-  screensaverDelay: 300,
-  compactMode: false,
-  showConfetti: true,
-};
-
-function loadPrefs(): Preferences {
-  if (typeof window === "undefined") return DEFAULT_PREFS;
-  try {
-    const raw = localStorage.getItem("mw-preferences");
-    if (raw) return { ...DEFAULT_PREFS, ...JSON.parse(raw) };
-  } catch {}
-  return DEFAULT_PREFS;
-}
-
-function savePrefs(prefs: Preferences) {
-  try {
-    localStorage.setItem("mw-preferences", JSON.stringify(prefs));
-  } catch {}
-}
-
-function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
-  return (
-    <button
-      onClick={onToggle}
-      className={`relative h-6 w-11 rounded-full transition-colors shrink-0 ${
-        active ? "bg-cyan" : "bg-white/[0.15]"
-      }`}
-    >
-      <div
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-          active ? "translate-x-[22px]" : "translate-x-0.5"
-        }`}
-      />
-    </button>
-  );
-}
-
-function SettingRow({ icon, label, description, children }: {
-  icon: React.ReactNode;
-  label: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl bg-white/[0.02] px-4 py-3.5 hover:bg-white/[0.03] transition-colors">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04]">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white">{label}</p>
-        <p className="text-[11px] text-muted mt-0.5">{description}</p>
-      </div>
-      <div className="shrink-0">{children}</div>
-    </div>
-  );
-}
+// ── Main settings page ───────────────────────────────────────
 
 export default function SettingsPage() {
-  const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
+  const { preferences, setTheme, setRefreshInterval } = useDashboardStore();
+  const { addToast } = useToastStore();
+  const [endpointStatuses, setEndpointStatuses] = useState<Record<string, EndpointStatus>>(() => {
+    const init: Record<string, EndpointStatus> = {};
+    for (const ep of ENDPOINTS) init[ep.url] = "unknown";
+    return init;
+  });
+  const [checking, setChecking] = useState(false);
 
-  useEffect(() => {
-    setPrefs(loadPrefs());
+  // Apply theme to DOM when the user picks one
+  const handleThemeChange = useCallback(
+    (themeId: string) => {
+      setTheme(themeId);
+      document.documentElement.setAttribute("data-theme", themeId);
+    },
+    [setTheme],
+  );
+
+  // Health-check all endpoints
+  const checkEndpoints = useCallback(async () => {
+    setChecking(true);
+    const next: Record<string, EndpointStatus> = {};
+    for (const ep of ENDPOINTS) next[ep.url] = "checking";
+    setEndpointStatuses({ ...next });
+
+    await Promise.all(
+      ENDPOINTS.map(async (ep) => {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(ep.url, {
+            method: "HEAD",
+            signal: controller.signal,
+            cache: "no-store",
+          });
+          clearTimeout(timer);
+          setEndpointStatuses((prev) => ({ ...prev, [ep.url]: res.ok ? "ok" : "error" }));
+        } catch {
+          setEndpointStatuses((prev) => ({ ...prev, [ep.url]: "error" }));
+        }
+      }),
+    );
+    setChecking(false);
   }, []);
 
-  const updatePref = <K extends keyof Preferences>(key: K, value: Preferences[K]) => {
-    const updated = { ...prefs, [key]: value };
-    setPrefs(updated);
-    savePrefs(updated);
-  };
+  // Run health-check on mount
+  useEffect(() => {
+    checkEndpoints();
+  }, [checkEndpoints]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-white">Settings</h1>
-        <p className="text-sm text-muted mt-1">Pipeline configuration, preferences & system information</p>
-      </div>
-
-      {/* Preferences */}
-      <div className="glass p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Cog size={16} className="text-cyan" />
-          <h3 className="text-sm font-semibold text-white">Preferences</h3>
+    <div className="space-y-4 animate-fade-in">
+      {/* ── Page header ──────────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan/10">
+          <Settings size={20} className="text-cyan" />
         </div>
-        <div className="space-y-1.5 stagger-list">
-          <SettingRow
-            icon={<RefreshCw size={14} className="text-cyan" />}
-            label="Auto Refresh"
-            description="Automatically refresh dashboard data"
-          >
-            <Toggle active={prefs.autoRefresh} onToggle={() => updatePref("autoRefresh", !prefs.autoRefresh)} />
-          </SettingRow>
-
-          {prefs.autoRefresh && (
-            <div className="ml-[52px] mr-4 mb-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Interval</span>
-                <span className="text-xs font-mono text-cyan">{prefs.autoRefreshInterval}s</span>
-              </div>
-              <input
-                type="range"
-                min={10}
-                max={120}
-                step={5}
-                value={prefs.autoRefreshInterval}
-                onChange={(e) => updatePref("autoRefreshInterval", parseInt(e.target.value))}
-              />
-              <div className="flex justify-between text-[10px] text-muted mt-0.5">
-                <span>10s</span>
-                <span>120s</span>
-              </div>
-            </div>
-          )}
-
-          <SettingRow
-            icon={<Bell size={14} className="text-amber" />}
-            label="Notifications"
-            description="Show desktop and in-app notifications"
-          >
-            <Toggle active={prefs.notifications} onToggle={() => updatePref("notifications", !prefs.notifications)} />
-          </SettingRow>
-
-          <SettingRow
-            icon={<Volume2 size={14} className="text-success" />}
-            label="Sound Effects"
-            description="Play audio feedback on actions"
-          >
-            <Toggle active={prefs.soundEffects} onToggle={() => updatePref("soundEffects", !prefs.soundEffects)} />
-          </SettingRow>
-
-          <SettingRow
-            icon={<Eye size={14} className="text-violet-400" />}
-            label="Animations"
-            description="Enable UI transitions and animations"
-          >
-            <Toggle active={prefs.animations} onToggle={() => updatePref("animations", !prefs.animations)} />
-          </SettingRow>
-
-          <SettingRow
-            icon={<Moon size={14} className="text-blue-400" />}
-            label="Screensaver"
-            description="Starfield screensaver after inactivity"
-          >
-            <Toggle active={prefs.screensaver} onToggle={() => updatePref("screensaver", !prefs.screensaver)} />
-          </SettingRow>
-
-          {prefs.screensaver && (
-            <div className="ml-[52px] mr-4 mb-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Delay</span>
-                <span className="text-xs font-mono text-cyan">{Math.round(prefs.screensaverDelay / 60)}m</span>
-              </div>
-              <input
-                type="range"
-                min={60}
-                max={900}
-                step={60}
-                value={prefs.screensaverDelay}
-                onChange={(e) => updatePref("screensaverDelay", parseInt(e.target.value))}
-              />
-              <div className="flex justify-between text-[10px] text-muted mt-0.5">
-                <span>1m</span>
-                <span>15m</span>
-              </div>
-            </div>
-          )}
-
-          <SettingRow
-            icon={<Zap size={14} className="text-warning" />}
-            label="Confetti Celebrations"
-            description="Show confetti on milestone completions"
-          >
-            <Toggle active={prefs.showConfetti} onToggle={() => updatePref("showConfetti", !prefs.showConfetti)} />
-          </SettingRow>
-
-          <SettingRow
-            icon={<Shield size={14} className="text-muted" />}
-            label="Compact Mode"
-            description="Reduce spacing for information density"
-          >
-            <Toggle active={prefs.compactMode} onToggle={() => updatePref("compactMode", !prefs.compactMode)} />
-          </SettingRow>
+        <div>
+          <h1 className="text-lg font-bold text-text">Settings</h1>
+          <p className="text-xs text-muted">Appearance, data preferences & service health</p>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="glass p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Zap size={16} className="text-amber" />
-          <h3 className="text-sm font-semibold text-white">Quick Actions</h3>
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <button
-            onClick={() => openShortcuts()}
-            className="flex items-center gap-3 rounded-xl bg-white/[0.02] border border-white/[0.06] px-4 py-3.5 hover:bg-white/[0.05] hover:border-white/[0.12] transition-all text-left hover-lift"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan/10">
-              <Keyboard size={14} className="text-cyan" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white">Keyboard Shortcuts</p>
-              <p className="text-[10px] text-muted">Press ? to view</p>
-            </div>
-          </button>
-          <button
-            onClick={() => {
-              localStorage.removeItem("mw-preferences");
-              localStorage.removeItem("mw-quick-notes");
-              setPrefs(DEFAULT_PREFS);
-            }}
-            className="flex items-center gap-3 rounded-xl bg-white/[0.02] border border-white/[0.06] px-4 py-3.5 hover:bg-error/[0.05] hover:border-error/20 transition-all text-left hover-lift"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-error/10">
-              <Download size={14} className="text-error" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white">Reset All Data</p>
-              <p className="text-[10px] text-muted">Clear local storage</p>
-            </div>
-          </button>
-          <a
-            href="http://127.0.0.1:8188"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-xl bg-white/[0.02] border border-white/[0.06] px-4 py-3.5 hover:bg-white/[0.05] hover:border-white/[0.12] transition-all text-left hover-lift"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10">
-              <Monitor size={14} className="text-success" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white">Open ComfyUI</p>
-              <p className="text-[10px] text-muted">127.0.0.1:8188</p>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Pipeline Configuration */}
-        <div className="glass p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Cog size={16} className="text-cyan" />
-            <h3 className="text-sm font-semibold text-white">Pipeline Configuration</h3>
-          </div>
-          <div className="rounded-lg bg-black/40 p-4 font-mono text-xs leading-relaxed overflow-x-auto">
-            {Object.entries(PIPELINE_CONFIG).map(([key, value]) => (
-              <div key={key} className="flex gap-2">
-                <span className="text-cyan min-w-[140px]">{key}:</span>
-                <span className="text-muted">{String(value)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* System Information */}
-        <div className="glass p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Monitor size={16} className="text-cyan" />
-            <h3 className="text-sm font-semibold text-white">System Information</h3>
-          </div>
-          <div className="space-y-3 stagger-list">
-            {SYSTEM_INFO.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-4 py-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
-                  <Icon size={14} className="text-muted" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted">{label}</p>
-                  <p className="text-sm font-medium text-white">{value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Design System */}
-      <div className="glass p-5">
-        <div className="flex items-center gap-2 mb-4">
+      {/* ── 1. Appearance ────────────────────────────────────── */}
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <div className="flex items-center gap-2 mb-3">
           <Palette size={16} className="text-cyan" />
-          <h3 className="text-sm font-semibold text-white">Design System — Active Theme</h3>
+          <h2 className="text-sm font-semibold text-text">Appearance</h2>
         </div>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 lg:grid-cols-11">
-          {COLORS.map(({ name, var: cssVar }) => (
-            <div key={name} className="text-center group cursor-pointer">
-              <div
-                className="mx-auto h-12 w-12 rounded-lg border border-white/10 mb-2 transition-transform group-hover:scale-110 group-hover:shadow-lg"
-                style={{ background: `var(${cssVar})` }}
-              />
-              <p className="text-xs font-medium text-white">{name}</p>
-              <p className="text-[10px] font-mono text-muted">{cssVar}</p>
-            </div>
-          ))}
+        <p className="text-xs text-muted mb-3">Choose a colour theme for the dashboard.</p>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {THEMES.map((t) => {
+            const active = preferences.theme === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => handleThemeChange(t.id)}
+                className={`relative rounded-xl border p-3 text-left transition-all ${
+                  active
+                    ? "border-cyan/40 bg-cyan/[0.06] shadow-[0_0_12px_rgba(125,211,252,0.08)]"
+                    : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.16] hover:bg-white/[0.04]"
+                }`}
+              >
+                {/* Active indicator */}
+                {active && (
+                  <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-cyan">
+                    <Check size={12} className="text-bg" />
+                  </div>
+                )}
+
+                {/* Swatch strip */}
+                <div className="flex gap-1.5 mb-2">
+                  {Object.entries(t.swatches).map(([name, color]) => (
+                    <div
+                      key={name}
+                      className="h-5 w-5 rounded-md border border-white/10"
+                      style={{ background: color }}
+                      title={name}
+                    />
+                  ))}
+                </div>
+
+                <p className="text-sm font-medium text-text">{t.label}</p>
+                <p className="text-[11px] text-muted mt-0.5">{t.description}</p>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* About */}
-      <div className="glass p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Info size={16} className="text-cyan" />
-          <h3 className="text-sm font-semibold text-white">About</h3>
+      {/* ── 2. Data & Performance ────────────────────────────── */}
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Gauge size={16} className="text-cyan" />
+          <h2 className="text-sm font-semibold text-text">Data & Performance</h2>
         </div>
-        <div className="flex items-start gap-4">
+        <p className="text-xs text-muted mb-3">
+          How often the dashboard polls backend services for fresh data.
+        </p>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {REFRESH_OPTIONS.map((opt) => {
+            const active = preferences.refreshInterval === opt.ms;
+            return (
+              <button
+                key={opt.ms}
+                onClick={() => setRefreshInterval(opt.ms)}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                  active
+                    ? "border-cyan/40 bg-cyan/10 text-cyan"
+                    : "border-white/[0.08] bg-white/[0.02] text-muted hover:text-white hover:border-white/[0.16]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="mt-2 text-[11px] text-muted">
+          Current interval:{" "}
+          <span className="font-mono text-cyan">{preferences.refreshInterval / 1000}s</span>
+        </p>
+
+        <div className="mt-4 border-t border-white/[0.06] pt-3">
+          <p className="text-xs text-muted mb-2">Cached thumbnails speed up gallery loading but use disk space.</p>
+          <button
+            onClick={async () => {
+              await fetch("/api/thumbnails/clear", { method: "POST" });
+              addToast("success", "Thumbnail cache cleared");
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-muted hover:text-white hover:border-white/[0.12] transition-colors"
+          >
+            <Trash2 size={12} />
+            Clear Thumbnail Cache
+          </button>
+        </div>
+      </div>
+
+      {/* ── 3. API Status ────────────────────────────────────── */}
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Wifi size={16} className="text-cyan" />
+            <h2 className="text-sm font-semibold text-text">API Status</h2>
+          </div>
+          <button
+            onClick={checkEndpoints}
+            disabled={checking}
+            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-muted hover:text-white hover:border-white/[0.12] transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={11} className={checking ? "animate-spin" : ""} />
+            Re-check
+          </button>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          {ENDPOINTS.map((ep) => {
+            const s = endpointStatuses[ep.url];
+            return (
+              <div
+                key={ep.url}
+                className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+              >
+                {/* Indicator */}
+                {s === "checking" && <Loader2 size={14} className="animate-spin text-muted" />}
+                {s === "ok" && (
+                  <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-success/20">
+                    <span className="h-2 w-2 rounded-full bg-success" />
+                  </span>
+                )}
+                {s === "error" && (
+                  <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-error/20">
+                    <span className="h-2 w-2 rounded-full bg-error" />
+                  </span>
+                )}
+                {s === "unknown" && (
+                  <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-white/10">
+                    <span className="h-2 w-2 rounded-full bg-white/20" />
+                  </span>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-text">{ep.label}</p>
+                  <p className="text-[10px] font-mono text-muted truncate">{ep.url}</p>
+                </div>
+
+                <span
+                  className={`text-[10px] font-semibold uppercase tracking-wider ${
+                    s === "ok"
+                      ? "text-success"
+                      : s === "error"
+                        ? "text-error"
+                        : "text-muted"
+                  }`}
+                >
+                  {s === "checking" ? "..." : s === "ok" ? "Reachable" : s === "error" ? "Offline" : "Pending"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 4. About ─────────────────────────────────────────── */}
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Info size={16} className="text-cyan" />
+          <h2 className="text-sm font-semibold text-text">About</h2>
+        </div>
+
+        <div className="flex items-start gap-4 mb-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan/20 to-cyan/5 border border-cyan/20">
             <Film size={20} className="text-cyan" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">The Mole World \u2014 Production Suite</p>
+            <p className="text-sm font-semibold text-text">Mole World Dashboard</p>
+            <p className="text-xs text-muted mt-0.5">Version 2.0</p>
             <p className="text-xs text-muted mt-1">
               Real-time monitoring dashboard for an AI-generated animated short film.
-              Built with WanVideo 2.1 (14B), ComfyUI, Flask, and Next.js.
+              Built with WanVideo 2.1 (14B), ComfyUI, Flask, and Next.js 16.
             </p>
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex flex-wrap gap-2 mt-2">
               {["Next.js 16", "TypeScript", "Tailwind v4", "Zustand", "Recharts", "WanVideo 2.1", "ComfyUI", "RTX 4090"].map((tech) => (
                 <span key={tech} className="badge bg-white/[0.06] text-muted border border-white/[0.08]">
                   {tech}
                 </span>
               ))}
             </div>
+            <div className="mt-3">
+              <button
+                onClick={resetOnboarding}
+                className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-muted hover:text-white hover:border-white/[0.12] transition-colors"
+              >
+                <Sparkles size={12} />
+                Restart Tour
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* CLI Commands */}
+        <div className="border-t border-white/[0.06] pt-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Terminal size={14} className="text-cyan" />
+            <h3 className="text-xs font-semibold text-text">Automation CLI Commands</h3>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {CLI_COMMANDS.map(({ cmd, desc }) => (
+              <div key={cmd} className="rounded-lg bg-white/[0.03] px-2.5 py-2">
+                <code className="block font-mono text-[10px] text-cyan">{cmd}</code>
+                <p className="mt-0.5 text-[10px] text-muted">{desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

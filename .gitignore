@@ -49,9 +49,15 @@ docs/WHATSAPP-PIPELINE-PLAN.md
 data/demo-automation.json
 outcome.md
 .playwright-mcp/
+e2e/
+playwright.config.ts
+DEEP-ANALYSIS.md
+.thumbcache/
+*.plist
 
 # junk
 nul
 test-results/
 videos-page.png
 *temp_readme*
+theme-preview.html

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -33,6 +33,7 @@ import {
   Music,
   LayoutGrid,
   AudioLines,
+  BarChart3,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useDashboardStore } from "@/lib/store";
@@ -54,6 +55,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { id: "orchestrate", label: "Orchestrate", icon: Clapperboard, href: "/orchestrate", badge: "CMD" },
+  { id: "analytics", label: "Analytics", icon: BarChart3, href: "/analytics", badge: "NEW" },
   {
     id: "local-production",
     label: "Local Production",
@@ -118,22 +120,17 @@ const NAV_ITEMS: NavItem[] = [
 
 // ── Helpers ────────────────────────────────────────────────────
 
-const STORAGE_KEY = "mw-sidebar-groups";
-
-function loadExpandedGroups(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return new Set(JSON.parse(raw));
-  } catch {}
-  // Default: expand groups marked defaultExpanded
-  return new Set(NAV_ITEMS.filter((i) => i.defaultExpanded).map((i) => i.id));
-}
-
-function saveExpandedGroups(groups: Set<string>) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...groups]));
-  } catch {}
+/** Build the set of expanded group IDs from persisted preferences, falling back to defaultExpanded. */
+function resolveExpandedGroups(persisted: Record<string, boolean>): Set<string> {
+  const expanded = new Set<string>();
+  for (const item of NAV_ITEMS) {
+    if (!item.children) continue;
+    const stored = persisted[item.id];
+    if (stored === true) expanded.add(item.id);
+    else if (stored === undefined && item.defaultExpanded) expanded.add(item.id);
+    // stored === false → leave collapsed
+  }
+  return expanded;
 }
 
 /** Find the group ID that contains a given path */
@@ -156,17 +153,12 @@ function findParentGroup(pathname: string): string | null {
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [hydrated, setHydrated] = useState(false);
   const [flyoutGroup, setFlyoutGroup] = useState<string | null>(null);
   const flyoutRef = useRef<HTMLDivElement>(null);
-  const { status, clips } = useDashboardStore();
+  const { status, clips, preferences, setSidebarExpanded } = useDashboardStore();
 
-  // Hydrate expanded groups from localStorage after mount (avoids SSR mismatch)
-  useEffect(() => {
-    setExpandedGroups(loadExpandedGroups());
-    setHydrated(true);
-  }, []);
+  // Derive expanded groups from persisted preferences
+  const expandedGroups = resolveExpandedGroups(preferences.sidebarExpanded);
 
   // Progress stats
   const v1Done = status?.v1?.done ?? 0;
@@ -187,12 +179,7 @@ export function Sidebar() {
   useEffect(() => {
     const parentId = findParentGroup(pathname);
     if (parentId && !expandedGroups.has(parentId)) {
-      setExpandedGroups((prev) => {
-        const next = new Set(prev);
-        next.add(parentId);
-        saveExpandedGroups(next);
-        return next;
-      });
+      setSidebarExpanded(parentId, true);
     }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -219,13 +206,7 @@ export function Sidebar() {
   };
 
   const toggleGroup = (id: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      saveExpandedGroups(next);
-      return next;
-    });
+    setSidebarExpanded(id, !expandedGroups.has(id));
   };
 
   // ── NavLeaf ────────────────────────────────────────────────
@@ -269,7 +250,7 @@ export function Sidebar() {
                 <span className={clsx(
                   "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold",
                   item.badge === "SOON"
-                    ? "bg-zinc-500/15 text-zinc-500"
+                    ? "bg-zinc-500/15 text-muted"
                     : "bg-cyan/15 text-cyan"
                 )}>
                   {item.badge}
@@ -325,7 +306,7 @@ export function Sidebar() {
               <ChevronDown
                 size={14}
                 className={clsx(
-                  "ml-auto shrink-0 text-zinc-600 transition-transform duration-200",
+                  "ml-auto shrink-0 text-muted transition-transform duration-200",
                   expanded && "rotate-180"
                 )}
               />
@@ -354,7 +335,7 @@ export function Sidebar() {
             className="absolute left-full top-0 z-50 ml-2 min-w-[180px] rounded-xl border border-white/[0.12] bg-bg-light p-2 shadow-xl"
             onMouseLeave={() => setFlyoutGroup(null)}
           >
-            <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted">
               {item.label}
             </div>
             <ul className="flex flex-col gap-0.5">
@@ -379,7 +360,7 @@ export function Sidebar() {
                         <span className={clsx(
                           "ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold",
                           child.badge === "SOON"
-                            ? "bg-zinc-500/15 text-zinc-500"
+                            ? "bg-zinc-500/15 text-muted"
                             : "bg-cyan/15 text-cyan"
                         )}>
                           {child.badge}

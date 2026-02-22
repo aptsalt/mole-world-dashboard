@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stat, open } from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 
-/**
- * Media file server — serves files from the project's public/ and data/ directories.
- * In the full pipeline, this also serves from automation/output/ and voice-library/.
- * In demo mode, most media paths will 404 (expected — no generated media on disk).
- */
-
-const PROJECT_ROOT = process.cwd();
+const OUTPUT_DIR = path.resolve(process.cwd(), "automation", "output");
+const AUTOMATION_OUTPUT_DIR = path.resolve(process.cwd(), "automation", "output");
+const VOICE_PROFILES_DIR = path.resolve(process.cwd(), "automation", "voice-library");
+const VOICE_SAMPLES_DIR = path.resolve(process.cwd(), "automation", "voice-library", "generated");
+const BGM_TRACKS_DIR = path.resolve(process.cwd(), "automation", "bgm-library", "tracks");
+const MOLT_OUTPUT_DIR = path.join(os.homedir(), ".openclaw", "workspace", "molt-output");
 
 const MIME_MAP: Record<string, string> = {
   ".mp4": "video/mp4",
@@ -29,11 +29,38 @@ export async function GET(
   const segments = (await params).path;
   const relativePath = segments.join("/");
 
-  // In demo mode, only serve from public/ directory
-  const filePath = path.resolve(PROJECT_ROOT, "public", relativePath);
+  // Route to the correct base directory
+  const isVoiceProfile = relativePath.startsWith("voice_profiles/");
+  const isVoiceSample = relativePath.startsWith("voice_samples/");
+  const isBgm = relativePath.startsWith("bgm/");
+  const isAutomation = relativePath.startsWith("automation/");
+  const isMolt = relativePath.startsWith("molt/");
+  const baseDir = isMolt
+    ? MOLT_OUTPUT_DIR
+    : isVoiceProfile
+      ? VOICE_PROFILES_DIR
+      : isVoiceSample
+        ? VOICE_SAMPLES_DIR
+        : isBgm
+          ? BGM_TRACKS_DIR
+          : isAutomation
+            ? AUTOMATION_OUTPUT_DIR
+            : OUTPUT_DIR;
+  const resolvedRelative = isMolt
+    ? relativePath.replace("molt/", "")
+    : isVoiceProfile
+      ? relativePath.replace("voice_profiles/", "references/")
+      : isVoiceSample
+        ? relativePath.replace("voice_samples/", "")
+        : isBgm
+          ? relativePath.replace("bgm/", "")
+          : isAutomation
+            ? relativePath.replace("automation/", "")
+            : relativePath;
 
   // Security: prevent path traversal
-  if (!filePath.startsWith(path.resolve(PROJECT_ROOT, "public"))) {
+  const filePath = path.resolve(baseDir, resolvedRelative);
+  if (!filePath.startsWith(path.resolve(baseDir))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

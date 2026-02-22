@@ -7,6 +7,10 @@ import {
   Globe, Sparkles, AlertCircle, ThumbsUp, ThumbsDown,
   Download, RefreshCw, FileAudio,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { FilterTabs } from "@/components/ui/filter-tabs";
+import { SkeletonStatRow, SkeletonGrid, SkeletonLine, SkeletonBlock } from "@/components/ui/skeleton";
 
 // ── Types ──────────────────────────────────────────────────────
 interface VoiceEntry {
@@ -229,11 +233,36 @@ export default function VoicesPage() {
 
   if (!library) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AudioWaveform size={32} className="text-cyan mx-auto mb-3 animate-pulse" />
-          <p className="text-sm text-muted">Loading voice library...</p>
+      <div className="space-y-4 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="skeleton w-5 h-5 rounded" />
+              <SkeletonLine className="w-28 h-5" />
+            </div>
+            <SkeletonLine className="w-52 h-3" />
+          </div>
+          <SkeletonBlock className="w-20 h-8" />
         </div>
+        {/* Stats row */}
+        <SkeletonStatRow count={4} />
+        {/* Progress bar */}
+        <div className="glass p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <SkeletonLine className="w-36 h-3" />
+            <SkeletonLine className="w-12 h-3" />
+          </div>
+          <SkeletonBlock className="h-2 w-full" />
+        </div>
+        {/* Category tabs */}
+        <div className="flex gap-2">
+          {Array.from({ length: 5 }, (_, i) => (
+            <SkeletonBlock key={i} className="h-8 w-28 rounded-lg" />
+          ))}
+        </div>
+        {/* Voice grid */}
+        <SkeletonGrid count={8} cols={4} />
       </div>
     );
   }
@@ -246,46 +275,41 @@ export default function VoicesPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       <audio ref={audioRef} className="sr-only" preload="none" />
 
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <AudioWaveform size={20} className="text-cyan" />
-            Voice Library
-          </h1>
-          <p className="text-sm text-muted mt-1">
-            {voices.length} voices &middot; {clipCount} clips ready &middot; Default: {library.defaultVoice}
-          </p>
-        </div>
-        <button
-          onClick={fetchVoices}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted hover:text-white hover:bg-white/[0.08] transition-colors border border-white/[0.10]"
-        >
-          <RefreshCw size={11} />
-          Refresh
-        </button>
-      </div>
+      <PageHeader
+        icon={AudioWaveform}
+        iconBg="bg-cyan/10"
+        title="Voice Library"
+        subtitle={`${voices.length} voices \u00b7 ${clipCount} clips ready \u00b7 Default: ${library.defaultVoice}`}
+        actions={
+          <button
+            onClick={fetchVoices}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted hover:text-white hover:bg-white/[0.08] transition-colors border border-white/[0.10]"
+          >
+            <RefreshCw size={11} />
+            Refresh
+          </button>
+        }
+      />
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
           { label: "Total Voices", value: voices.length, color: "var(--cyan)", icon: AudioWaveform },
           { label: "Clips Ready", value: clipCount, color: "var(--lime)", icon: FileAudio },
-          { label: "Approved", value: qualityCounts.good, color: "#22c55e", icon: ThumbsUp },
+          { label: "Approved", value: qualityCounts.good, color: "var(--success)", icon: ThumbsUp },
           { label: "Needs Replace", value: qualityCounts.replace, color: "#ef4444", icon: ThumbsDown },
         ].map((s) => (
-          <div key={s.label} className="glass p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}15` }}>
-              <s.icon size={16} style={{ color: s.color }} />
-            </div>
-            <div>
-              <span className="text-lg font-bold text-white">{s.value}</span>
-              <p className="text-[10px] text-muted">{s.label}</p>
-            </div>
-          </div>
+          <StatCard
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            icon={s.icon}
+            color={s.color}
+          />
         ))}
       </div>
 
@@ -336,22 +360,15 @@ export default function VoicesPage() {
       </div>
 
       {/* Category Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {(Object.keys(CATEGORY_LABELS) as CategoryKey[]).map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setCategory(cat)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
-              category === cat
-                ? "bg-white/10 text-white border-white/20"
-                : "bg-white/[0.02] text-muted border-white/[0.10] hover:bg-white/[0.05]"
-            }`}
-          >
-            {CATEGORY_LABELS[cat]}
-            <span className="ml-1.5 text-[10px] opacity-60">{categoryCounts[cat] ?? 0}</span>
-          </button>
-        ))}
-      </div>
+      <FilterTabs
+        tabs={(Object.keys(CATEGORY_LABELS) as CategoryKey[]).map((cat) => ({
+          key: cat,
+          label: CATEGORY_LABELS[cat],
+          count: categoryCounts[cat] ?? 0,
+        }))}
+        active={category}
+        onChange={(key) => setCategory(key as CategoryKey)}
+      />
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -397,7 +414,7 @@ export default function VoicesPage() {
       </div>
 
       {/* Voice Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredVoices.map((voice) => {
           const color = CATEGORY_COLORS[voice.category] ?? "#94a3b8";
           const isPlaying = playingVoice === voice.key;
