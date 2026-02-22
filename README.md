@@ -211,9 +211,68 @@ Screenplay → Storyboard JSON → Per-Shot Prompt Assembly
 
 ---
 
+## Built Entirely with Claude Code
+
+This entire project — dashboard, automation pipeline, WhatsApp bridge, TTS engine, distribution system — was built by one person pair-programming with [Claude Code](https://claude.ai/code) (Anthropic's CLI coding agent). Zero lines of hand-written code. Every file was authored, debugged, and iterated through Claude Code sessions.
+
+### Usage Stats (Feb 5–22, 2026)
+
+| Metric | Value |
+|---|---|
+| **Total sessions** | 216+ |
+| **Total messages exchanged** | 200,000+ |
+| **Tokens processed** | 3.76 billion |
+| **API-equivalent cost** | ~$8,267 (on $200/mo Pro plan — **41x leverage**) |
+| **Tool invocations** | 10,000+ (file edits, bash commands, grep, web search) |
+| **Longest single session** | 947 messages, ~13 hours, 182 MB of agent output |
+| **Peak day** | Feb 21 — 22,072 messages across 17 sessions |
+| **Models used** | Claude Opus 4.6 (primary), Sonnet 4 (subagents) |
+
+### How It Works
+
+Every feature starts as a natural-language plan. Claude Code decomposes it into tasks, reads the codebase, writes the implementation, runs tests, debugs failures, and iterates — all in one session. The human role: architecture decisions, product direction, live testing, and course-correcting when things break.
+
+Example: The [Production House Pipeline session](#session-1--production-house-pipeline) built 10 major systems (F5-TTS engine, 70-voice library, YouTube downloader, audio mixer, multi-segment video composition, WhatsApp command interface) in 5 hours with 541 tool invocations and zero hand-written code.
+
+---
+
+## Coding Agent Sessions
+
+Raw Claude Code session transcripts from building this project. Each shows the full human ↔ agent conversation: architecture decisions, implementation, live debugging, and iteration.
+
+### Session 1 — Production House Pipeline
+**Duration:** 5 hours | **Messages:** 594 | **Tool calls:** 541 | **Context resets:** 4
+
+Built in one session: F5-TTS engine with Apple Silicon MPS acceleration, 70-voice celebrity library (Morgan Freeman, Irrfan Khan, David Attenborough, etc.), YouTube reference clip downloader, FFmpeg audio mixer, text overlay system, multi-segment lesson pipeline (6×5s shots → 30s narrated videos), model alias system for 15+ free AI models, WhatsApp bridge with typo-tolerant parsing, and a dashboard voice review UI. End-to-end: WhatsApp message → narrated AI video delivered back, fully automated.
+
+### Session 2 — WhatsApp Pipeline (Mac Mini 24/7)
+**Duration:** 2.5 hours | **Messages:** 453 | **Tool calls:** 437 | **Context resets:** 3
+
+Adapted a Windows Playwright automation pipeline to macOS, bridged it to WhatsApp via OpenClaw gateway, and configured it to run 24/7 on a Mac Mini. The session includes live debugging with the user testing from their phone — discovering the wrong WhatsApp group JID, fixing allowlist configuration, and a full architectural pivot when the LLM agent refused to use image generation tools (building a standalone WebSocket bridge to bypass it).
+
+### Session 3 — Full Dashboard Build (Monster Session)
+**Duration:** ~13 hours | **Messages:** 947 | **File size:** 182 MB
+
+Built the complete production dashboard in a single session: V1/V2 clip comparison with synchronized playback and drag slider, film composer with timeline editor, real-time pipeline status, media API, mini player, voice lab, storyboard viewer, and 20 pages. Full stack: Next.js + Zustand + Recharts + Framer Motion.
+
+### Session 4 — Higgsfield Automation Pipeline
+**Duration:** ~4 hours | **Tool calls:** 7-phase autonomous build
+
+End-to-end browser automation that controls Higgsfield.ai (video generation platform with no API) via Playwright + local Ollama LLM (Qwen 14B). Automates 89 shots of the animated film from prompt generation to video download. The agent self-managed a 7-task backlog — scaffolding, queue system, Ollama integration, browser profiles, output processing, dashboard integration, and state management.
+
+### Download Session Transcripts
+
+| File | Size | Contents |
+|---|---|---|
+| [`mole-world-higgsfield-automation-session.zip`](sessions/mole-world-higgsfield-automation-session.zip) | 1.6 MB | Higgsfield pipeline build — browser automation, queue system, Ollama LLM integration |
+| [`mole-world-full-dashboard-session.zip`](sessions/mole-world-full-dashboard-session.zip) | 9.4 MB | Full dashboard build — 20 pages, 120+ components, 13-hour session |
+| [`yc_claude_sessions.zip`](sessions/yc_claude_sessions.zip) | 20 KB | Production House + WhatsApp Pipeline transcripts (formatted markdown) |
+
+---
+
 ## Built By
 
-**Deep Chand** — Solo founder & engineer. The entire AI film production pipeline — screenplay, video generation, voice synthesis, compositing, and this dashboard — designed, built, and operated by one person on consumer hardware with zero budget.
+**Deep Chand** — Solo founder & engineer. The entire AI film production pipeline — screenplay, video generation, voice synthesis, compositing, WhatsApp automation, and this dashboard — designed, directed, and built by one person on consumer hardware with zero budget, pair-programming exclusively with Claude Code.
 
 ---
 
