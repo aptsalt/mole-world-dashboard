@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+import { createDashboardJob } from "@/lib/job-factory";
 
 const JOBS_PATH = path.resolve(process.cwd(), "automation", "state", "whatsapp-jobs.json");
 
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
       bgmVolume?: number;
       cast?: Array<{ character: string; voice: string }>;
       sceneCount?: number;
+      filmTemplateKey?: string;
     };
 
     if (!body.type || !body.description) {
@@ -81,55 +83,7 @@ export async function POST(request: Request) {
       } catch { /* start fresh */ }
     }
 
-    const now = new Date().toISOString();
-    const job = {
-      id: `wa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      type: body.type,
-      description: body.description,
-      enhancedPrompt: null,
-      motionPrompt: null,
-      endFramePrompt: null,
-      replyTo: "",
-      senderPhone: "",
-      status: "pending",
-      batchCount: 1,
-      outputPaths: [],
-      chatResponse: null,
-      error: null,
-      articleTitle: null,
-      articleUrl: null,
-      articleSource: null,
-      storyId: null,
-      caption: null,
-      narrationScript: body.narrationScript ?? null,
-      sharedMediaPath: null,
-      postPlatforms: [],
-      contentPostId: null,
-      voiceKey: body.voiceKey ?? null,
-      imageModelAlias: body.imageModelAlias ?? null,
-      videoModelAlias: body.videoModelAlias ?? null,
-      scheduledAt: body.scheduledAt ?? null,
-      priority: body.priority ?? 0,
-      source: "dashboard" as const,
-      narrationMode: body.narrationMode ?? "auto",
-      pipeline: body.pipeline ?? "higgsfield",
-      narrationStatus: "none",
-      narrationAudioPath: null,
-      narratedVideoPath: null,
-      shotPlans: null,
-      audioSettings: null,
-      bgmPresetKey: body.bgmPresetKey ?? null,
-      bgmVolume: body.bgmVolume ?? null,
-      cast: body.cast ?? null,
-      sceneCount: body.sceneCount ?? null,
-      filmOutline: null,
-      currentScene: null,
-      totalScenes: null,
-      sceneVideoPaths: [],
-      createdAt: now,
-      updatedAt: now,
-      completedAt: null,
-    };
+    const job = createDashboardJob(body);
 
     jobs.push(job);
 

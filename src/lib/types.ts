@@ -486,7 +486,7 @@ export interface OrchestratePipelineInfo {
 
 export interface OrchestrateStatusResponse {
   pipelines: Record<string, OrchestratePipelineInfo>;
-  services: { worker: boolean; bridge: boolean; ollama: boolean };
+  services: { worker: boolean; bridge: boolean; ollama: boolean; xApi: boolean; perplexity: boolean };
   jobStats: { total: number; pending: number; active: number; completed: number; failed: number };
 }
 

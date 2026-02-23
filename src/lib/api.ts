@@ -305,7 +305,7 @@ export async function getOrchestrateStatus(): Promise<OrchestrateStatusResponse>
         content: { status: "idle", label: "Content", activeJobs: 0 },
         distribution: { status: "idle", label: "Distribution", activeJobs: 0 },
       },
-      services: { worker: false, bridge: false, ollama: false },
+      services: { worker: false, bridge: false, ollama: false, xApi: false, perplexity: false },
       jobStats: { total: 0, pending: 0, active: 0, completed: 0, failed: 0 },
     };
   }
@@ -350,6 +350,7 @@ export async function createOrchestrateJob(job: {
   bgmVolume?: number;
   cast?: Array<{ character: string; voice: string }>;
   sceneCount?: number;
+  filmTemplateKey?: string;
 }) {
   const res = await fetchWithTimeout('/api/orchestrate/jobs', {
     method: 'POST',
@@ -397,6 +398,46 @@ export async function savePromptPreset(preset: { name: string; category: string;
     throw new Error(err.error ?? 'Failed to save preset');
   }
   return res.json();
+}
+
+// ── Job History API ──────────────────────────────────────────
+
+export interface ArchivedJob {
+  id: string;
+  type: string;
+  description: string;
+  status: string;
+  senderPhone: string;
+  priority: number;
+  source: string;
+  pipeline: string;
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  archivedAt: string;
+}
+
+export interface JobHistoryResponse {
+  jobs: ArchivedJob[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export async function getJobHistory(filters?: { search?: string; type?: string; status?: string; limit?: number; offset?: number }): Promise<JobHistoryResponse> {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.search) params.set("search", filters.search);
+    if (filters?.type) params.set("type", filters.type);
+    if (filters?.status) params.set("status", filters.status);
+    if (filters?.limit) params.set("limit", String(filters.limit));
+    if (filters?.offset) params.set("offset", String(filters.offset));
+    const res = await fetchWithTimeout(`/api/orchestrate/history?${params}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json() as Promise<JobHistoryResponse>;
+  } catch {
+    return { jobs: [], total: 0, limit: 50, offset: 0 };
+  }
 }
 
 // ── Narration Studio API ──────────────────────────────────────

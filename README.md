@@ -1,6 +1,6 @@
-# The Mole World — AI Film Production Dashboard
+# Higgis Pipeline — AI Content Generation via WhatsApp
 
-> Real-time production control center for an AI-generated animated short film. Every frame rendered by a 14B parameter video model on a single RTX 4090. Built solo, zero budget.
+> One message, one masterpiece. A solo-built, zero-budget system that turns WhatsApp messages into AI-generated images, videos, narrated lessons, and multi-scene films — powered by 13 free AI models, 70 cloned voices, and a single MacBook Air.
 
 **[Live Demo](https://aptsalt.github.io/mole-world-dashboard/)** | **[Source](https://github.com/aptsalt/mole-world-dashboard)**
 
@@ -12,13 +12,50 @@
 |:---:|:---:|:---:|
 | ![Dashboard](screenshots/dashboard.png) | ![Research](screenshots/research-hub.png) | ![Distribution](screenshots/distribution.png) |
 
-| Production (Warm Slate) | Voice Lab | Settings |
+| Production (Warm Slate) | Voice Lab | Content Pipeline |
 |:---:|:---:|:---:|
-| ![Production](screenshots/production.png) | ![Voices](screenshots/voices.png) | ![Settings](screenshots/settings.png) |
+| ![Production](screenshots/production.png) | ![Voices](screenshots/voices.png) | ![Content](screenshots/content.png) |
 
-| Clips Browser | Composition Editor | Content Pipeline |
+| Clips Browser | Composition Editor | Settings |
 |:---:|:---:|:---:|
-| ![Clips](screenshots/clips.png) | ![Compose](screenshots/compose.png) | ![Content](screenshots/content.png) |
+| ![Clips](screenshots/clips.png) | ![Compose](screenshots/compose.png) | ![Settings](screenshots/settings.png) |
+
+---
+
+## What This Does
+
+Users send a message like `molt clip a sunset over mountains` in a WhatsApp group. The system enhances the prompt with a local LLM, generates a photorealistic image on Higgsfield.ai, converts it to a 5-second video, optionally adds narration in Morgan Freeman's voice with background music, and delivers the result back to WhatsApp — all automatically, all free.
+
+For longer content, `molt lesson Black holes explained` produces a 30-second narrated video with 6 AI-generated shots. `molt film -t documentary The Amazon Rainforest` produces a multi-scene film with dialogue, narration, and cinematic BGM.
+
+---
+
+## Architecture
+
+```
+WhatsApp ──→ OpenClaw Gateway (:18789)
+                    │
+                    ▼
+              Bridge Service ──→ whatsapp-jobs.json ◄── Dashboard (:3003)
+                                        │
+                    ┌───────────────────┼──────────────────┐
+                    ▼                   ▼                  ▼
+              Pipeline Worker    Claude Worker     News Curator
+                    │                   │                  │
+         ┌─────────┼─────────┐         │                  │
+         ▼         ▼         ▼         ▼                  ▼
+    Higgsfield  Ollama    F5-TTS   Claude CLI        RSS Feeds
+    (browser)  (:11434)  (Python)                    + Ollama
+         │                   │         │                  │
+         └───────┬───────────┘         │                  │
+                 ▼                     ▼                  ▼
+           FFmpeg Compose         Responses           Digest
+                 │                     │                  │
+                 └─────────────────────┴──────────────────┘
+                                       │
+                                       ▼
+                              OpenClaw → WhatsApp
+```
 
 ---
 
@@ -39,18 +76,16 @@
 
 ---
 
-## Multi-Theme System
+## Tech Stack
 
-Four color themes with WCAG AA-compliant contrast ratios (~6:1 for muted text):
-
-| Theme | Background | Accent | Muted Text Contrast |
-|---|---|---|---|
-| **Cool Navy** (default) | `#1f2435` | `#7dd3fc` | ~6.2:1 |
-| **Warm Slate** | `#2b2d3e` | `#89b4fa` | ~5.8:1 |
-| **Soft Charcoal** | `#2e3045` | `#c4b5fd` | ~5.8:1 |
-| **Light Mode** | `#f8fafc` | `#0284c7` | ~7.0:1 |
-
-Implemented via CSS custom properties with `[data-theme]` attribute overrides and a route-aware `ThemeProvider`. All colors use `var()` references — zero hardcoded hex values in components. SSE (Server-Sent Events) provides real-time updates for automation status, queue changes, and narration progress.
+| Layer | Technology |
+|-------|-----------|
+| Dashboard | Next.js 16.1 (App Router + Turbopack), TypeScript 5.9 (strict), Tailwind CSS v4, Zustand, Recharts |
+| AI Models | Higgsfield.ai (13 image + 4 video models, free unlimited) |
+| Local LLM | Ollama — qwen3:14b (text), minicpm-v (vision) |
+| TTS | F5-TTS + OpenVoice (Python, Apple Silicon MPS) — 70 cloned voices |
+| Media | FFmpeg, whisper-cpp, yt-dlp |
+| Infra | launchd (7 services), file-based IPC (JSON), OpenClaw (WhatsApp gateway) |
 
 ---
 
@@ -65,8 +100,8 @@ Implemented via CSS custom properties with `[data-theme]` attribute overrides an
 | **Videos** | `/videos` | Multi-model video tracker (Hailuo, Seedance, Kling) |
 | **Compose** | `/compose` | Timeline editor with render presets, crossfade, narration toggle, title card |
 | **Storyboard** | `/storyboard` | Full screenplay: 14 scenes, character profiles, expandable shot details |
-| **Voice Lab** | `/voices` | 7 voice profiles, waveform previews, 89 assignments, quality grading |
-| **Narration** | `/narration` | TTS narration management and script editor |
+| **Voice Lab** | `/voices` | 70 voice profiles, waveform previews, quality grading |
+| **Narration** | `/narration` | TTS narration management, script editor, BGM picker |
 | **Pitch** | `/pitch` | Development journey presentation |
 | **Production** | `/production` | Automation control panel with CLI commands and activity feed |
 | **Gallery** | `/gallery` | Video gallery browser |
@@ -75,42 +110,52 @@ Implemented via CSS custom properties with `[data-theme]` attribute overrides an
 | **Content** | `/content` | News-to-social pipeline: AI curation, generation, scheduling |
 | **Research Hub** | `/research` | Multi-platform research (X, Instagram, YouTube, TikTok, RSS) with content ranking |
 | **Distribution** | `/distribution` | Social posting hub with calendar, queue, per-platform pages |
-| **Orchestrate** | `/orchestrate` | AI pipeline control (Ollama-powered) |
-| **Analytics** | `/analytics` | Cross-pipeline analytics — platform distribution, model performance, voice usage, posting timeline |
-| **Settings** | `/settings` | Theme selection (4 themes), refresh interval, API health checks, thumbnail cache |
+| **Orchestrate** | `/orchestrate` | Unified pipeline control with prompt library (83 presets) |
+| **Analytics** | `/analytics` | Cross-pipeline analytics — platform distribution, model performance, voice usage |
+| **Settings** | `/settings` | Theme selection (4 themes), refresh interval, API health checks |
 | **Logs** | `/logs` | Pipeline log viewer with search and color-coded entries |
 
 ### Key Highlights
 
-- **WCAG AA Contrast** — all text meets 4.5:1 minimum contrast ratio across all 4 themes
-- **SSE Real-Time Updates** — Server-Sent Events for live automation status, queue changes, and narration progress
-- **V1/V2 Comparison Slider** — synchronized dual-video playback with drag-to-compare using CSS `clip-path: inset()`
-- **Mini Player** — persistent bottom-bar across all pages with playlist navigation, click-to-seek, built on Zustand
-- **Research Hub** — scrape trending content from X, Instagram, YouTube, TikTok; Ollama ranks by relevance/virality; one-click tweet composer
-- **Distribution Hub** — unified social media posting with calendar view, post queue, per-platform analytics
-- **Guided Onboarding** — interactive walkthrough for first-time users
+- **WCAG AA Contrast** — all text meets 4.5:1 minimum across all 4 themes
+- **SSE Real-Time Updates** — Server-Sent Events for live pipeline status
+- **V1/V2 Comparison Slider** — synchronized dual-video with CSS `clip-path: inset()`
+- **Mini Player** — persistent bottom-bar with playlist navigation, built on Zustand
 - **Command Palette** (`Ctrl+K`) — fuzzy search across pages and actions
 - **Keyboard Shortcuts** (`?` to view) — full keyboard navigation
 - **Floating Action Button** — radial menu with 8 quick actions
 - **Screensaver** — starfield animation after idle timeout (theme-aware)
-- **60+ Custom Animations** — shimmer bars, pulse indicators, glass breathing, staggered reveals, waveform bars
+- **60+ Custom Animations** — shimmer bars, pulse indicators, glass breathing, staggered reveals
 
 ---
 
-## Tech Stack
+## Multi-Theme System
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16.1 (App Router + Turbopack) |
-| Language | TypeScript 5.9 (strict, zero `any`) |
-| Styling | Tailwind CSS v4 + CSS custom properties |
-| State | Zustand |
-| Charts | Recharts |
-| Animation | Framer Motion + CSS keyframes |
-| Icons | Lucide React |
-| Video AI | WanVideo 2.1 (14B) via ComfyUI |
-| TTS | F5-TTS with voice cloning (7 profiles) |
-| GPU | NVIDIA RTX 4090 (16GB VRAM) |
+Four color themes with WCAG AA-compliant contrast ratios (~6:1 for muted text):
+
+| Theme | Background | Accent | Muted Text Contrast |
+|---|---|---|---|
+| **Cool Navy** (default) | `#1f2435` | `#7dd3fc` | ~6.2:1 |
+| **Warm Slate** | `#2b2d3e` | `#89b4fa` | ~5.8:1 |
+| **Soft Charcoal** | `#2e3045` | `#c4b5fd` | ~5.8:1 |
+| **Light Mode** | `#f8fafc` | `#0284c7` | ~7.0:1 |
+
+Implemented via CSS custom properties with `[data-theme]` attribute overrides and a route-aware `ThemeProvider`. Zero hardcoded hex values in components.
+
+---
+
+## WhatsApp Commands
+
+```bash
+molt generate a cyberpunk city at night          # Image
+molt clip a golden retriever on a beach          # Image + 5s video
+molt lesson The Fall of Rome                     # 6-shot narrated lesson (30s)
+molt film -t documentary The Amazon Rainforest   # Multi-scene film
+molt clip -v david_attenborough -m b a reef      # Custom voice + model
+molt What is quantum computing?                  # Ollama chat response
+```
+
+Flags: `-v <voice>`, `-m <model>`, `-b <bgm>`, `-s <scenes>`, `-t <template>`
 
 ---
 
@@ -150,9 +195,10 @@ mole-world-dashboard/
 │   ├── demo-content-*.json  # Content pipeline data
 │   ├── demo-research-*.json # Research feeds (X, IG, YT, TikTok)
 │   └── demo-whatsapp-*.json # WhatsApp job data
+├── docs/                    # Technical documentation
 ├── screenshots/             # App screenshots
 ├── src/
-│   ├── app/                 # 18 page routes + API routes
+│   ├── app/                 # 20+ page routes + 47 API routes
 │   │   ├── globals.css      # Multi-theme system + 800+ lines animations
 │   │   └── ...
 │   ├── components/
@@ -173,41 +219,35 @@ mole-world-dashboard/
 
 ---
 
-## Pipeline Architecture
+## Documentation
 
-```
-Screenplay → Storyboard JSON → Per-Shot Prompt Assembly
-                                        ↓
-                              ComfyUI + WanVideo 2.1 (14B)
-                              ~35 min/clip, 16GB VRAM
-                                        ↓
-                              V1 (rapid 480p) → V2 (quality 720p)
-                                        ↓
-                              F5-TTS Voice Synthesis
-                              7 voice profiles, 89 narrations
-                                        ↓
-                              FFmpeg Compositing
-                              Crossfade + narration overlay
-                                        ↓
-                              This Dashboard
-                              Real-time monitoring, quality grading, distribution
-```
+| Document | Description |
+|----------|-------------|
+| [Docs Index](./docs/README.md) | Documentation home with reading path |
+| [Vision](./docs/VISION.md) | Product vision, values, design principles |
+| [Architecture](./docs/ARCHITECTURE.md) | System diagram, component map, data flows |
+| [Dashboard](./docs/DASHBOARD.md) | 20+ pages, 47 API routes, UI features |
+| [WhatsApp Commands](./docs/WHATSAPP-COMMANDS.md) | Complete command reference |
+| [Pipelines](./docs/PIPELINES.md) | Image, video, lesson, film, news pipelines |
+| [Models & Voices](./docs/MODELS-AND-VOICES.md) | 13 image models, 70 voices, 50 BGM tracks |
+| [State Management](./docs/STATE-MANAGEMENT.md) | File-based IPC, job schemas, state machines |
+| [Testing](./docs/TESTING.md) | Vitest framework, 75 tests, coverage gaps |
 
 ---
 
 ## Key Metrics
 
 | Metric | Value |
-|---|---|
-| Total renders | 46 clips |
-| Total GPU time | 27.5 hours |
-| Average per clip | 35.8 minutes |
-| Voice profiles | 7 tested, 2 selected |
-| Audio narrations | 89 clips (76.6 MB) |
-| Custom animations | 60+ keyframes |
-| Dashboard pages | 20 |
-| Color themes | 4 (WCAG AA compliant) |
-| TypeScript strict | Zero `any` types |
+|--------|-------|
+| Dashboard pages | 20+ |
+| API endpoints | 47 |
+| AI models (free) | 13 image + 4 video |
+| Voices | 70 (7 categories) |
+| BGM tracks | 50 (10 categories) |
+| Unit tests | 75 |
+| Services | 7 (launchd) |
+| Color themes | 4 (WCAG AA) |
+| TypeScript | Strict, zero `any` |
 
 ---
 
@@ -215,64 +255,62 @@ Screenplay → Storyboard JSON → Per-Shot Prompt Assembly
 
 This entire project — dashboard, automation pipeline, WhatsApp bridge, TTS engine, distribution system — was built by one person pair-programming with [Claude Code](https://claude.ai/code) (Anthropic's CLI coding agent). Zero lines of hand-written code. Every file was authored, debugged, and iterated through Claude Code sessions.
 
-### Usage Stats (Feb 5–22, 2026)
+### Usage Stats (Feb 5-22, 2026)
 
 | Metric | Value |
 |---|---|
 | **Total sessions** | 216+ |
 | **Total messages exchanged** | 200,000+ |
 | **Tokens processed** | 3.76 billion |
-| **API-equivalent cost** | ~$8,267 (on $200/mo Pro plan — **41x leverage**) |
+| **API-equivalent cost** | ~$8,267 (on $200/mo Pro plan -- **41x leverage**) |
 | **Tool invocations** | 10,000+ (file edits, bash commands, grep, web search) |
 | **Longest single session** | 947 messages, ~13 hours, 182 MB of agent output |
-| **Peak day** | Feb 21 — 22,072 messages across 17 sessions |
+| **Peak day** | Feb 21 -- 22,072 messages across 17 sessions |
 | **Models used** | Claude Opus 4.6 (primary), Sonnet 4 (subagents) |
 
 ### How It Works
 
-Every feature starts as a natural-language plan. Claude Code decomposes it into tasks, reads the codebase, writes the implementation, runs tests, debugs failures, and iterates — all in one session. The human role: architecture decisions, product direction, live testing, and course-correcting when things break.
-
-Example: The [Production House Pipeline session](#session-1--production-house-pipeline) built 10 major systems (F5-TTS engine, 70-voice library, YouTube downloader, audio mixer, multi-segment video composition, WhatsApp command interface) in 5 hours with 541 tool invocations and zero hand-written code.
+Every feature starts as a natural-language plan. Claude Code decomposes it into tasks, reads the codebase, writes the implementation, runs tests, debugs failures, and iterates -- all in one session. The human role: architecture decisions, product direction, live testing, and course-correcting when things break.
 
 ---
 
 ## Coding Agent Sessions
 
-Raw Claude Code session transcripts from building this project. Each shows the full human ↔ agent conversation: architecture decisions, implementation, live debugging, and iteration.
+Raw Claude Code session transcripts from building this project. Each shows the full human <> agent conversation: architecture decisions, implementation, live debugging, and iteration.
 
-### Session 1 — Production House Pipeline
+### Session 1 -- Production House Pipeline
 **Duration:** 5 hours | **Messages:** 594 | **Tool calls:** 541 | **Context resets:** 4
 
-Built in one session: F5-TTS engine with Apple Silicon MPS acceleration, 70-voice celebrity library (Morgan Freeman, Irrfan Khan, David Attenborough, etc.), YouTube reference clip downloader, FFmpeg audio mixer, text overlay system, multi-segment lesson pipeline (6×5s shots → 30s narrated videos), model alias system for 15+ free AI models, WhatsApp bridge with typo-tolerant parsing, and a dashboard voice review UI. End-to-end: WhatsApp message → narrated AI video delivered back, fully automated.
+Built in one session: F5-TTS engine with Apple Silicon MPS acceleration, 70-voice celebrity library (Morgan Freeman, Irrfan Khan, David Attenborough, etc.), YouTube reference clip downloader, FFmpeg audio mixer, text overlay system, multi-segment lesson pipeline, model alias system for 15+ free AI models, WhatsApp bridge with typo-tolerant parsing, and a dashboard voice review UI.
 
-### Session 2 — WhatsApp Pipeline (Mac Mini 24/7)
+### Session 2 -- WhatsApp Pipeline (Mac Mini 24/7)
 **Duration:** 2.5 hours | **Messages:** 453 | **Tool calls:** 437 | **Context resets:** 3
 
-Adapted a Windows Playwright automation pipeline to macOS, bridged it to WhatsApp via OpenClaw gateway, and configured it to run 24/7 on a Mac Mini. The session includes live debugging with the user testing from their phone — discovering the wrong WhatsApp group JID, fixing allowlist configuration, and a full architectural pivot when the LLM agent refused to use image generation tools (building a standalone WebSocket bridge to bypass it).
+Adapted a Windows Playwright automation pipeline to macOS, bridged it to WhatsApp via OpenClaw gateway, and configured it to run 24/7 on a Mac Mini.
 
-### Session 3 — Full Dashboard Build (Monster Session)
+### Session 3 -- Full Dashboard Build (Monster Session)
 **Duration:** ~13 hours | **Messages:** 947 | **File size:** 182 MB
 
-Built the complete production dashboard in a single session: V1/V2 clip comparison with synchronized playback and drag slider, film composer with timeline editor, real-time pipeline status, media API, mini player, voice lab, storyboard viewer, and 20 pages. Full stack: Next.js + Zustand + Recharts + Framer Motion.
+Built the complete production dashboard in a single session: 20 pages, V1/V2 comparison slider, film composer, real-time pipeline status, mini player, voice lab, storyboard viewer.
 
-### Session 4 — Higgsfield Automation Pipeline
+### Session 4 -- Higgsfield Automation Pipeline
 **Duration:** ~4 hours | **Tool calls:** 7-phase autonomous build
 
-End-to-end browser automation that controls Higgsfield.ai (video generation platform with no API) via Playwright + local Ollama LLM (Qwen 14B). Automates 89 shots of the animated film from prompt generation to video download. The agent self-managed a 7-task backlog — scaffolding, queue system, Ollama integration, browser profiles, output processing, dashboard integration, and state management.
+End-to-end browser automation that controls Higgsfield.ai via Playwright + local Ollama LLM. Automates 89 shots from prompt generation to video download.
 
 ### Download Session Transcripts
 
 | File | Size | Contents |
 |---|---|---|
-| [`mole-world-higgsfield-automation-session.zip`](sessions/mole-world-higgsfield-automation-session.zip) | 1.6 MB | Higgsfield pipeline build — browser automation, queue system, Ollama LLM integration |
-| [`mole-world-full-dashboard-session.zip`](sessions/mole-world-full-dashboard-session.zip) | 9.4 MB | Full dashboard build — 20 pages, 120+ components, 13-hour session |
-| [`yc_claude_sessions.zip`](sessions/yc_claude_sessions.zip) | 20 KB | Production House + WhatsApp Pipeline transcripts (formatted markdown) |
+| [`mole-world-higgsfield-automation-session.zip`](sessions/mole-world-higgsfield-automation-session.zip) | 1.6 MB | Higgsfield pipeline build |
+| [`mole-world-full-dashboard-session.zip`](sessions/mole-world-full-dashboard-session.zip) | 9.4 MB | Full dashboard build -- 20 pages, 13-hour session |
+| [`yc_claude_sessions.zip`](sessions/yc_claude_sessions.zip) | 20 KB | Production House + WhatsApp Pipeline transcripts |
 
 ---
 
 ## Built By
 
-**Deep Chand** — Solo founder & engineer. The entire AI film production pipeline — screenplay, video generation, voice synthesis, compositing, WhatsApp automation, and this dashboard — designed, directed, and built by one person on consumer hardware with zero budget, pair-programming exclusively with Claude Code.
+**Deep Chand** -- Solo founder & engineer. The entire AI film production pipeline -- screenplay, video generation, voice synthesis, compositing, WhatsApp automation, and this dashboard -- designed, directed, and built by one person on consumer hardware with zero budget, pair-programming exclusively with Claude Code.
 
 ---
 

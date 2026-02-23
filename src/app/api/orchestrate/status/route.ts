@@ -24,14 +24,35 @@ function isOllamaUp(): Promise<boolean> {
   });
 }
 
+function isPerplexityUp(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => { controller.abort(); resolve(false); }, 2000);
+    fetch("http://localhost:18790", { signal: controller.signal })
+      .then((r) => { clearTimeout(timer); resolve(r.ok); })
+      .catch(() => { clearTimeout(timer); resolve(false); });
+  });
+}
+
+function isXConfigured(): boolean {
+  return !!(
+    process.env.X_API_KEY &&
+    process.env.X_API_SECRET &&
+    process.env.X_ACCESS_TOKEN &&
+    process.env.X_ACCESS_TOKEN_SECRET
+  );
+}
+
 export async function GET() {
   try {
     // Check pipeline services
-    const [workerAlive, bridgeAlive, ollamaUp] = await Promise.all([
+    const [workerAlive, bridgeAlive, ollamaUp, perplexityUp] = await Promise.all([
       isServiceRunning("ai.moleworld.pipeline"),
       isServiceRunning("ai.moleworld.bridge"),
       isOllamaUp(),
+      isPerplexityUp(),
     ]);
+    const xApiConfigured = isXConfigured();
 
     // Count jobs by status
     let jobStats = { total: 0, pending: 0, active: 0, completed: 0, failed: 0 };
@@ -74,6 +95,8 @@ export async function GET() {
         worker: workerAlive,
         bridge: bridgeAlive,
         ollama: ollamaUp,
+        xApi: xApiConfigured,
+        perplexity: perplexityUp,
       },
       jobStats,
     });

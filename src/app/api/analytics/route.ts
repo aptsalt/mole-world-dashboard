@@ -90,6 +90,75 @@ export async function GET() {
   const totalFailed = queue.filter((i: any) => i.status === "failed").length;
   const totalPending = queue.filter((i: any) => i.status === "pending").length;
 
+  // ── X Engagement Metrics ──────────────────────────────────────
+  let engagementTotalLikes = 0;
+  let engagementTotalRetweets = 0;
+  let engagementTotalReplies = 0;
+  let engagementTotalImpressions = 0;
+  let engagementTotalPosts = 0;
+  const engagementPosts: Array<{
+    id: string;
+    title: string;
+    platform: string;
+    postId: string | null;
+    likes: number;
+    retweets: number;
+    replies: number;
+    impressions: number;
+    postedAt: string | null;
+    postUrl: string | null;
+  }> = [];
+
+  for (const post of posts) {
+    if (!post.platforms) continue;
+    for (const [platform, status] of Object.entries(post.platforms) as [string, any][]) {
+      if (status.status !== "posted") continue;
+
+      const eng = status.engagement;
+      const likes = eng?.likes ?? 0;
+      const retweets = eng?.retweets ?? 0;
+      const replies = eng?.replies ?? 0;
+      const impressions = eng?.impressions ?? 0;
+
+      // Count all posted items, even without engagement data
+      if (eng) {
+        engagementTotalLikes += likes;
+        engagementTotalRetweets += retweets;
+        engagementTotalReplies += replies;
+        engagementTotalImpressions += impressions;
+      }
+      engagementTotalPosts++;
+
+      engagementPosts.push({
+        id: String(post.id ?? ""),
+        title: String(post.storyTitle ?? post.caption ?? "").slice(0, 100),
+        platform,
+        postId: status.postId ?? null,
+        likes,
+        retweets,
+        replies,
+        impressions,
+        postedAt: status.postedAt ?? null,
+        postUrl: status.postUrl ?? null,
+      });
+    }
+  }
+
+  // Sort engagement posts by impressions descending, then likes
+  engagementPosts.sort((a, b) => b.impressions - a.impressions || b.likes - a.likes);
+
+  // ── Production Stats from WhatsApp jobs ──────────────────────
+  const productionStats = { total: 0, completed: 0, failed: 0, images: 0, clips: 0, lessons: 0, films: 0 };
+  productionStats.total = jobs.length;
+  for (const j of jobs) {
+    if (j.status === "completed") productionStats.completed++;
+    if (j.status === "failed") productionStats.failed++;
+    if (j.type === "image") productionStats.images++;
+    if (j.type === "clip") productionStats.clips++;
+    if (j.type === "lesson") productionStats.lessons++;
+    if (j.type === "film") productionStats.films++;
+  }
+
   return NextResponse.json({
     overview: {
       totalPosts: posts.length,
@@ -103,5 +172,14 @@ export async function GET() {
     voiceStats,
     timeline,
     typeStats,
+    engagement: {
+      totalLikes: engagementTotalLikes,
+      totalRetweets: engagementTotalRetweets,
+      totalReplies: engagementTotalReplies,
+      totalImpressions: engagementTotalImpressions,
+      totalPosts: engagementTotalPosts,
+      posts: engagementPosts.slice(0, 50),
+    },
+    production: productionStats,
   });
 }

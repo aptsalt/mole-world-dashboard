@@ -117,6 +117,18 @@ export default function DistributionHub() {
     [posts]
   );
 
+  // Posts due today (scheduledAt in the past or today, with at least one "scheduled" platform)
+  const dueTodayCount = useMemo(() => {
+    const now = new Date();
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return posts.filter((p) => {
+      if (!p.scheduledAt) return false;
+      const scheduled = new Date(p.scheduledAt);
+      if (scheduled > endOfDay) return false;
+      return Object.values(p.platforms).some((pl) => pl.status === "scheduled");
+    }).length;
+  }, [posts]);
+
   // Total non-posted posts for queue indicator
   const totalPending = useMemo(
     () => posts.filter((p) => !Object.values(p.platforms).every((pl) => pl.status === "posted")).length,
@@ -308,6 +320,18 @@ export default function DistributionHub() {
           />
         ))}
       </div>
+
+      {/* Due Today Indicator */}
+      {dueTodayCount > 0 && (
+        <div className="glass flex items-center gap-2.5 px-4 py-2.5 border-l-2 border-lime">
+          <Clock size={14} className="text-lime shrink-0" />
+          <span className="text-xs text-white/80">
+            <span className="font-semibold text-lime">{dueTodayCount}</span>
+            {" "}{dueTodayCount === 1 ? "post" : "posts"} due today
+          </span>
+          <span className="text-[10px] text-white/30 ml-auto">Auto-posting enabled</span>
+        </div>
+      )}
 
       {/* Platform Breakdown */}
       {totalPosts > 0 && (

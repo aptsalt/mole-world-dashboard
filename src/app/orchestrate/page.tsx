@@ -28,6 +28,9 @@ import {
   Music,
   CloudDownload,
   Volume2,
+  Archive,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { clsx } from "clsx";
 import {
@@ -39,8 +42,9 @@ import {
   getPromptPresets,
   getBgmPresets,
   downloadBgmTrack,
+  getJobHistory,
 } from "@/lib/api";
-import type { BgmTrack } from "@/lib/api";
+import type { BgmTrack, ArchivedJob } from "@/lib/api";
 import { TemplateGallery } from "@/components/orchestrate/template-gallery";
 
 // ── Types ──────────────────────────────────────────────────────
@@ -141,6 +145,15 @@ const CONTENT_TYPE_ICONS: Record<ContentType, typeof ImageIcon> = {
 
 const SCENE_COUNT_OPTIONS = [3, 5, 7, 10, 15, 20];
 
+const FILM_TEMPLATE_OPTIONS = [
+  { key: "", label: "No Template" },
+  { key: "documentary", label: "Documentary \u2014 Observe, Explore, Reveal" },
+  { key: "drama", label: "Drama \u2014 Setup, Conflict, Resolution" },
+  { key: "explainer", label: "Explainer \u2014 Question, Breakdown, Insight" },
+  { key: "travel_vlog", label: "Travel Vlog \u2014 Arrive, Explore, Reflect" },
+  { key: "product_launch", label: "Product Launch \u2014 Tease, Reveal, Impact" },
+];
+
 // ── Page ────────────────────────────────────────────────────────
 
 export default function OrchestratePage() {
@@ -150,6 +163,15 @@ export default function OrchestratePage() {
     higgsfield: { status: "idle", label: "Higgsfield", activeJobs: 0 },
     content: { status: "idle", label: "Content", activeJobs: 0 },
   });
+
+  // Services
+  const [services, setServices] = useState<{
+    worker: boolean;
+    bridge: boolean;
+    ollama: boolean;
+    xApi: boolean;
+    perplexity: boolean;
+  }>({ worker: false, bridge: false, ollama: false, xApi: false, perplexity: false });
 
   // Models
   const [imageModels, setImageModels] = useState<Model[]>([]);
@@ -186,6 +208,9 @@ export default function OrchestratePage() {
   // Film scene count
   const [sceneCount, setSceneCount] = useState(5);
 
+  // Film template
+  const [filmTemplate, setFilmTemplate] = useState<string>("");
+
   // BGM state
   const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([]);
   const [selectedBgm, setSelectedBgm] = useState<string | null>(null);
@@ -196,6 +221,13 @@ export default function OrchestratePage() {
   const bgmAudioRef = useRef<HTMLAudioElement>(null);
 
   const promptRef = useRef<HTMLTextAreaElement>(null);
+
+  // History state
+  const [historyJobs, setHistoryJobs] = useState<ArchivedJob[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyType, setHistoryType] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
 
   // ── Data fetching ──────────────────────────────────────────
 
@@ -218,6 +250,7 @@ export default function OrchestratePage() {
         content: content ?? prev.content,
       }));
     }
+    if (statusData.services) setServices(statusData.services);
     if (modelsData.image) setImageModels(modelsData.image);
     if (modelsData.video) setVideoModels(modelsData.video);
     if (Array.isArray(jobsData)) setJobs(jobsData);
@@ -230,6 +263,23 @@ export default function OrchestratePage() {
     const interval = setInterval(fetchAll, 5000);
     return () => clearInterval(interval);
   }, [fetchAll]);
+
+  // ── History fetching ────────────────────────────────────────
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      const params: { search?: string; type?: string; limit?: number } = { limit: 20 };
+      if (historySearch) params.search = historySearch;
+      if (historyType) params.type = historyType;
+      const data = await getJobHistory(params);
+      setHistoryJobs(data.jobs ?? []);
+      setHistoryTotal(data.total ?? 0);
+    } catch { /* ignore */ }
+  }, [historySearch, historyType]);
+
+  useEffect(() => {
+    if (showHistory) fetchHistory();
+  }, [showHistory, fetchHistory]);
 
   // ── Handlers ───────────────────────────────────────────────
 
@@ -256,6 +306,7 @@ export default function OrchestratePage() {
         bgmVolume: selectedBgm && hasVoice ? bgmVolume : undefined,
         cast: hasCast ? castRows.filter((c) => c.character && c.voice) : undefined,
         sceneCount: contentType === "film" ? sceneCount : undefined,
+        ...(filmTemplate ? { filmTemplateKey: filmTemplate } : {}),
       });
 
       setPrompt("");
@@ -410,6 +461,22 @@ export default function OrchestratePage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Service Status */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            { label: "Worker", ok: services.worker },
+            { label: "Bridge", ok: services.bridge },
+            { label: "Ollama", ok: services.ollama },
+            { label: "X API", ok: services.xApi },
+            { label: "Perplexity", ok: services.perplexity },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2.5 py-1">
+              <span className={clsx("h-1.5 w-1.5 rounded-full", s.ok ? "bg-green-400" : "bg-zinc-600")} />
+              <span className="text-[10px] text-zinc-400">{s.label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Two-column layout: Presets Left, Composer + Queue Right */}
@@ -597,7 +664,7 @@ export default function OrchestratePage() {
                         </select>
                       </div>
 
-                      {/* Video model (for clip/lesson/film) */}
+                      {/* Video model (for clip/lesson) */}
                       {["clip", "lesson", "film"].includes(contentType) && (
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Video Model</label>
@@ -614,7 +681,7 @@ export default function OrchestratePage() {
                         </div>
                       )}
 
-                      {/* Voice (for clip/lesson/film, hidden when cast enabled) */}
+                      {/* Voice (for clip/lesson) */}
                       {["clip", "lesson", "film"].includes(contentType) && !castEnabled && (
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Voice</label>
@@ -631,7 +698,7 @@ export default function OrchestratePage() {
                         </div>
                       )}
 
-                      {/* Narration mode (for clip/lesson/film) */}
+                      {/* Narration mode (for clip/lesson) */}
                       {["clip", "lesson", "film"].includes(contentType) && (
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Narration</label>
@@ -653,6 +720,29 @@ export default function OrchestratePage() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Film Template (film only) */}
+                  {contentType === "film" && selectedPipeline === "higgsfield" && (
+                    <div className="mb-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-zinc-500 uppercase tracking-wider">Film Template</label>
+                        <select
+                          value={filmTemplate}
+                          onChange={(e) => {
+                            setFilmTemplate(e.target.value);
+                            if (e.target.value === "documentary") setSceneCount(7);
+                            else if (e.target.value === "travel_vlog") setSceneCount(7);
+                            else if (e.target.value) setSceneCount(5);
+                          }}
+                          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                        >
+                          {FILM_TEMPLATE_OPTIONS.map((t) => (
+                            <option key={t.key} value={t.key}>{t.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   )}
 
@@ -1036,7 +1126,7 @@ export default function OrchestratePage() {
                         </button>
                       )}
 
-                      {/* Open in Narration Studio link for completed clip/lesson/film jobs */}
+                      {/* Open in Narration Studio link for completed clip/lesson jobs */}
                       {job.status === "completed" && ["clip", "lesson", "film"].includes(job.type) && (
                         <Link
                           href="/narration"
@@ -1065,6 +1155,72 @@ export default function OrchestratePage() {
                   >
                     View Full Queue <ArrowRight size={12} />
                   </Link>
+                </div>
+              )}
+            </div>
+
+            {/* ── Job History / Archive ─────────────────────────── */}
+            <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="flex w-full items-center gap-2 text-sm font-semibold text-zinc-300 hover:text-white"
+              >
+                <Archive size={14} />
+                <span>Job History</span>
+                <span className="ml-auto text-xs text-zinc-500">
+                  {showHistory ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </span>
+              </button>
+
+              {showHistory && (
+                <div className="mt-3 space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={historySearch}
+                      onChange={(e) => setHistorySearch(e.target.value)}
+                      placeholder="Search history..."
+                      className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white outline-none placeholder:text-zinc-500"
+                    />
+                    <select
+                      value={historyType}
+                      onChange={(e) => setHistoryType(e.target.value)}
+                      className="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-white"
+                    >
+                      <option value="">All Types</option>
+                      <option value="image">Image</option>
+                      <option value="clip">Clip</option>
+                      <option value="lesson">Lesson</option>
+                      <option value="film">Film</option>
+                    </select>
+                    <button onClick={fetchHistory} className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white hover:bg-white/20">
+                      <Search size={12} />
+                    </button>
+                  </div>
+
+                  <div className="text-[10px] text-zinc-500">{historyTotal} archived jobs</div>
+
+                  <div className="max-h-60 space-y-1 overflow-y-auto">
+                    {historyJobs.map((job) => (
+                      <div key={job.id} className="flex items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-2 text-xs">
+                        <span className={clsx(
+                          "h-1.5 w-1.5 shrink-0 rounded-full",
+                          job.status === "completed" ? "bg-green-400" : "bg-red-400"
+                        )} />
+                        <span className="shrink-0 font-mono text-zinc-500">{job.type}</span>
+                        <span className="flex-1 truncate text-zinc-300">{job.description}</span>
+                        {job.error && (
+                          <span className="shrink-0 truncate max-w-[120px] text-[10px] text-red-400" title={job.error}>
+                            {job.error}
+                          </span>
+                        )}
+                        <span className="shrink-0 text-zinc-600">{new Date(job.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    ))}
+                    {historyJobs.length === 0 && (
+                      <div className="py-4 text-center text-xs text-zinc-600">No archived jobs yet</div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

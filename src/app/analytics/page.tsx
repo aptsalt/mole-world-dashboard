@@ -9,6 +9,15 @@ import {
   RefreshCw,
   Activity,
   PieChart as PieChartIcon,
+  Heart,
+  Repeat,
+  Eye,
+  MessageCircle,
+  Film,
+  Image as ImageIcon,
+  BookOpen,
+  Clapperboard,
+  ExternalLink,
 } from "lucide-react";
 import {
   BarChart,
@@ -41,6 +50,19 @@ const CHART_TOOLTIP_STYLE = {
   },
 };
 
+interface EngagementPost {
+  id: string;
+  title: string;
+  platform: string;
+  postId: string | null;
+  likes: number;
+  retweets: number;
+  replies: number;
+  impressions: number;
+  postedAt: string | null;
+  postUrl: string | null;
+}
+
 interface AnalyticsData {
   overview: {
     totalPosts: number;
@@ -54,6 +76,23 @@ interface AnalyticsData {
   voiceStats: Record<string, number>;
   timeline: Record<string, number>;
   typeStats: Record<string, number>;
+  engagement?: {
+    totalLikes: number;
+    totalRetweets: number;
+    totalReplies: number;
+    totalImpressions: number;
+    totalPosts: number;
+    posts: EngagementPost[];
+  };
+  production?: {
+    total: number;
+    completed: number;
+    failed: number;
+    images: number;
+    clips: number;
+    lessons: number;
+    films: number;
+  };
 }
 
 export default function AnalyticsPage() {
@@ -124,7 +163,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const { overview, platformStats, modelStats, voiceStats, timeline, typeStats } = data;
+  const { overview, platformStats, modelStats, voiceStats, timeline, typeStats, engagement, production } = data;
 
   // Transform data for charts
   const platformChartData = Object.entries(platformStats).map(([key, val]) => ({
@@ -187,6 +226,27 @@ export default function AnalyticsPage() {
         <StatCard label="Pending" value={overview.totalPending} icon={Activity} color="#f59e0b" />
         <StatCard label="Total Jobs" value={overview.totalJobs} icon={BarChart3} color="var(--accent)" />
       </div>
+
+      {/* X Engagement Stats */}
+      {engagement && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <StatCard label="Total Likes" value={engagement.totalLikes.toLocaleString()} icon={Heart} color="#f87171" />
+          <StatCard label="Retweets" value={engagement.totalRetweets.toLocaleString()} icon={Repeat} color="#60a5fa" />
+          <StatCard label="Replies" value={engagement.totalReplies.toLocaleString()} icon={MessageCircle} color="#34d399" />
+          <StatCard label="Impressions" value={engagement.totalImpressions.toLocaleString()} icon={Eye} color="#a78bfa" />
+          <StatCard label="Posted" value={engagement.totalPosts} icon={ExternalLink} color="#fbbf24" />
+        </div>
+      )}
+
+      {/* Production Breakdown */}
+      {production && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <StatCard label="Images" value={production.images} icon={ImageIcon} color="#fbbf24" />
+          <StatCard label="Clips" value={production.clips} icon={Film} color="var(--lime)" />
+          <StatCard label="Lessons" value={production.lessons} icon={BookOpen} color="var(--cyan)" />
+          <StatCard label="Films" value={production.films} icon={Clapperboard} color="#fb923c" />
+        </div>
+      )}
 
       {/* Platform + Model Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -321,6 +381,55 @@ export default function AnalyticsPage() {
           )}
         </div>
       </div>
+
+      {/* Per-post Engagement Breakdown */}
+      {engagement && engagement.posts.length > 0 && (
+        <div className="glass p-4">
+          <h3 className="text-xs font-semibold text-text mb-3 flex items-center gap-2">
+            <Heart size={14} className="text-red-400" />
+            Post Engagement
+          </h3>
+          <div className="space-y-1">
+            {engagement.posts.map((post) => (
+              <div
+                key={`${post.id}-${post.platform}`}
+                className="flex items-center gap-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] px-3 py-2 transition-colors"
+              >
+                <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-mono text-muted uppercase">
+                  {post.platform}
+                </span>
+                <span className="flex-1 truncate text-xs text-zinc-300">
+                  {post.title || "Untitled"}
+                </span>
+                <div className="flex items-center gap-3 text-[10px] shrink-0">
+                  <span className="flex items-center gap-1 text-red-400">
+                    <Heart size={10} /> {post.likes}
+                  </span>
+                  <span className="flex items-center gap-1 text-blue-400">
+                    <Repeat size={10} /> {post.retweets}
+                  </span>
+                  <span className="flex items-center gap-1 text-green-400">
+                    <MessageCircle size={10} /> {post.replies}
+                  </span>
+                  <span className="flex items-center gap-1 text-purple-400">
+                    <Eye size={10} /> {post.impressions.toLocaleString()}
+                  </span>
+                </div>
+                {post.postUrl && (
+                  <a
+                    href={post.postUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted hover:text-white transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

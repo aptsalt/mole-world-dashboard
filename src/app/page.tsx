@@ -173,31 +173,61 @@ function QuickActions() {
 }
 
 function RenderQueueWidget({ stats }: { stats: RenderStats | null }) {
-  const queue = [
-    { shot: "P1_S04_001", phase: "v2", priority: "high" },
-    { shot: "P1_S04_002", phase: "v2", priority: "normal" },
-    { shot: "P1_S05_001", phase: "v2", priority: "normal" },
-    { shot: "P1_S05_002", phase: "v2", priority: "low" },
-  ];
+  const [summary, setSummary] = useState<{
+    total: number; pending: number; active: number; completed: number; failed: number;
+    recentJobs: Array<{ id: string; type: string; description: string; status: string; priority: number; createdAt: string }>;
+  } | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/whatsapp/summary", { cache: "no-store" });
+        if (res.ok) setSummary(await res.json());
+      } catch { /* ignore */ }
+    };
+    load();
+    const interval = setInterval(load, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const queue = summary?.recentJobs?.filter((j) => !["completed", "failed"].includes(j.status)) ?? [];
 
   return (
     <div className="glass p-5">
       <div className="flex items-center gap-2 mb-3">
         <Layers size={14} className="text-amber" />
-        <h3 className="text-sm font-semibold text-text section-heading">Render Queue</h3>
-        <span className="ml-auto badge badge-v2">{queue.length} queued</span>
+        <h3 className="text-sm font-semibold text-text section-heading">Pipeline Queue</h3>
+        <span className="ml-auto badge badge-v2">{summary ? `${summary.active} active` : "..."}</span>
       </div>
+      {summary && (
+        <div className="grid grid-cols-4 gap-2 mb-3">
+          {[
+            { label: "Pending", value: summary.pending, color: "text-amber" },
+            { label: "Active", value: summary.active, color: "text-lime" },
+            { label: "Done", value: summary.completed, color: "text-green-400" },
+            { label: "Failed", value: summary.failed, color: "text-red-400" },
+          ].map((s) => (
+            <div key={s.label} className="text-center">
+              <div className={`text-lg font-bold ${s.color}`}>{s.value}</div>
+              <div className="text-[10px] text-muted">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="space-y-1.5 stagger-list">
+        {queue.length === 0 && (
+          <div className="text-xs text-muted text-center py-2">No active jobs</div>
+        )}
         {queue.map((item, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2 row-hover">
+          <div key={item.id} className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2 row-hover">
             <span className="text-xs text-muted font-mono w-4">{i + 1}</span>
-            <code className="text-xs font-mono text-white flex-1">{item.shot}</code>
-            <span className="badge badge-v2">{item.phase}</span>
+            <code className="text-xs font-mono text-white flex-1 truncate">{item.description}</code>
+            <span className="badge badge-v2">{item.type}</span>
             <span className={`text-[10px] font-semibold uppercase ${
-              item.priority === "high" ? "text-error" :
-              item.priority === "normal" ? "text-cyan" : "text-muted"
+              item.priority >= 50 ? "text-error" :
+              item.priority > 0 ? "text-cyan" : "text-muted"
             }`}>
-              {item.priority}
+              {item.status.replace(/_/g, " ")}
             </span>
           </div>
         ))}

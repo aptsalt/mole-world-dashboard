@@ -161,6 +161,10 @@ export default function ContentCalendar({ posts, onPostClick, onReschedule, onCr
     setCurrentDate(new Date());
   }
 
+  // Reschedule hour picker state
+  const [rescheduleTarget, setRescheduleTarget] = useState<{ postId: string; date: Date } | null>(null);
+  const [rescheduleHour, setRescheduleHour] = useState(9);
+
   // Drag & drop
   function handleDragStart(postId: string, e: React.DragEvent) {
     setDragPost(postId);
@@ -187,10 +191,24 @@ export default function ContentCalendar({ posts, onPostClick, onReschedule, onCr
 
   function handleDrop(date: Date) {
     if (dragPost && onReschedule) {
-      onReschedule(dragPost, date);
+      setRescheduleTarget({ postId: dragPost, date });
+      setRescheduleHour(9);
     }
     setDragPost(null);
     setDragOverDay(null);
+  }
+
+  function confirmReschedule() {
+    if (rescheduleTarget && onReschedule) {
+      const d = new Date(rescheduleTarget.date);
+      d.setHours(rescheduleHour, 0, 0, 0);
+      onReschedule(rescheduleTarget.postId, d);
+    }
+    setRescheduleTarget(null);
+  }
+
+  function cancelReschedule() {
+    setRescheduleTarget(null);
   }
 
   // Tooltip
@@ -422,6 +440,47 @@ export default function ContentCalendar({ posts, onPostClick, onReschedule, onCr
 
       {/* Tooltip */}
       {tooltip && <PostTooltip post={tooltip.post} x={tooltip.x} y={tooltip.y} />}
+
+      {/* Reschedule Hour Picker */}
+      {rescheduleTarget && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40" onClick={cancelReschedule}>
+          <div
+            className="bg-bg-light border border-white/[0.15] rounded-xl p-4 shadow-2xl min-w-[220px] animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs font-semibold text-white mb-1">Reschedule to</p>
+            <p className="text-[10px] text-white/40 mb-3">
+              {rescheduleTarget.date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+            </p>
+            <label className="text-[10px] text-white/50 block mb-1">Hour</label>
+            <select
+              value={rescheduleHour}
+              onChange={(e) => setRescheduleHour(Number(e.target.value))}
+              className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan/30 mb-3"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h} className="bg-[#1a1a2e] text-white">
+                  {h.toString().padStart(2, "0")}:00{h < 12 ? " AM" : " PM"}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={cancelReschedule}
+                className="flex-1 px-3 py-1.5 rounded-lg text-[10px] text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmReschedule}
+                className="flex-1 px-3 py-1.5 rounded-lg text-[10px] font-medium bg-cyan/20 text-cyan hover:bg-cyan/30 border border-cyan/20 transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
