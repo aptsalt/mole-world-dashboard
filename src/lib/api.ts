@@ -348,6 +348,8 @@ export async function createOrchestrateJob(job: {
   videoModelAlias?: string;
   bgmPresetKey?: string;
   bgmVolume?: number;
+  cast?: Array<{ character: string; voice: string }>;
+  sceneCount?: number;
 }) {
   const res = await fetchWithTimeout('/api/orchestrate/jobs', {
     method: 'POST',

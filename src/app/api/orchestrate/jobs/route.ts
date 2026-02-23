@@ -64,6 +64,8 @@ export async function POST(request: Request) {
       videoModelAlias?: string;
       bgmPresetKey?: string;
       bgmVolume?: number;
+      cast?: Array<{ character: string; voice: string }>;
+      sceneCount?: number;
     };
 
     if (!body.type || !body.description) {
@@ -118,6 +120,12 @@ export async function POST(request: Request) {
       audioSettings: null,
       bgmPresetKey: body.bgmPresetKey ?? null,
       bgmVolume: body.bgmVolume ?? null,
+      cast: body.cast ?? null,
+      sceneCount: body.sceneCount ?? null,
+      filmOutline: null,
+      currentScene: null,
+      totalScenes: null,
+      sceneVideoPaths: [],
       createdAt: now,
       updatedAt: now,
       completedAt: null,

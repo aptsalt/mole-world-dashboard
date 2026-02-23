@@ -46,7 +46,7 @@ import { TemplateGallery } from "@/components/orchestrate/template-gallery";
 // ── Types ──────────────────────────────────────────────────────
 
 type Pipeline = "higgsfield" | "content" | "local_gpu";
-type ContentType = "image" | "clip" | "lesson" | "chat";
+type ContentType = "image" | "clip" | "lesson" | "film" | "chat";
 type NarrationMode = "auto" | "manual";
 
 interface PipelineInfo {
@@ -79,6 +79,15 @@ interface OrchestrateJob {
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
+  cast?: Array<{ character: string; voice: string }> | null;
+  sceneCount?: number | null;
+  currentScene?: number | null;
+  totalScenes?: number | null;
+}
+
+interface CastRow {
+  character: string;
+  voice: string;
 }
 
 interface Preset {
@@ -126,8 +135,11 @@ const CONTENT_TYPE_ICONS: Record<ContentType, typeof ImageIcon> = {
   image: ImageIcon,
   clip: Film,
   lesson: BookOpen,
+  film: Clapperboard,
   chat: MessageSquare,
 };
+
+const SCENE_COUNT_OPTIONS = [3, 5, 7, 10, 15, 20];
 
 // ── Page ────────────────────────────────────────────────────────
 
@@ -163,6 +175,16 @@ export default function OrchestratePage() {
   const [narrationScript, setNarrationScript] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Cast state (multi-voice)
+  const [castEnabled, setCastEnabled] = useState(false);
+  const [castRows, setCastRows] = useState<CastRow[]>([
+    { character: "narrator", voice: "morgan_freeman" },
+    { character: "character", voice: "james_earl_jones" },
+  ]);
+
+  // Film scene count
+  const [sceneCount, setSceneCount] = useState(5);
 
   // BGM state
   const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([]);
@@ -216,6 +238,9 @@ export default function OrchestratePage() {
     setIsSubmitting(true);
 
     try {
+      const hasVoice = ["clip", "lesson", "film"].includes(contentType);
+      const hasCast = castEnabled && castRows.length > 1 && hasVoice;
+
       await createOrchestrateJob({
         type: contentType,
         description: prompt.trim(),
@@ -224,11 +249,13 @@ export default function OrchestratePage() {
         scheduledAt: scheduled && scheduledAt ? new Date(scheduledAt).toISOString() : null,
         narrationMode,
         narrationScript: narrationMode === "manual" ? narrationScript : undefined,
-        voiceKey: ["clip", "lesson"].includes(contentType) ? voiceKey : undefined,
+        voiceKey: hasVoice && !hasCast ? voiceKey : undefined,
         imageModelAlias: imageModel,
-        videoModelAlias: ["clip", "lesson"].includes(contentType) ? videoModel : undefined,
-        bgmPresetKey: selectedBgm && ["clip", "lesson"].includes(contentType) ? selectedBgm : undefined,
-        bgmVolume: selectedBgm && ["clip", "lesson"].includes(contentType) ? bgmVolume : undefined,
+        videoModelAlias: hasVoice ? videoModel : undefined,
+        bgmPresetKey: selectedBgm && hasVoice ? selectedBgm : undefined,
+        bgmVolume: selectedBgm && hasVoice ? bgmVolume : undefined,
+        cast: hasCast ? castRows.filter((c) => c.character && c.voice) : undefined,
+        sceneCount: contentType === "film" ? sceneCount : undefined,
       });
 
       setPrompt("");
@@ -509,7 +536,7 @@ export default function OrchestratePage() {
               {/* Content type (Higgsfield pipeline) */}
               {selectedPipeline === "higgsfield" && (
                 <div className="mb-4 flex gap-2">
-                  {(["image", "clip", "lesson", "chat"] as ContentType[]).map((t) => {
+                  {(["image", "clip", "lesson", "film", "chat"] as ContentType[]).map((t) => {
                     const Icon = CONTENT_TYPE_ICONS[t];
                     return (
                       <button
@@ -570,8 +597,8 @@ export default function OrchestratePage() {
                         </select>
                       </div>
 
-                      {/* Video model (for clip/lesson) */}
-                      {["clip", "lesson"].includes(contentType) && (
+                      {/* Video model (for clip/lesson/film) */}
+                      {["clip", "lesson", "film"].includes(contentType) && (
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Video Model</label>
                           <select
@@ -587,8 +614,8 @@ export default function OrchestratePage() {
                         </div>
                       )}
 
-                      {/* Voice (for clip/lesson) */}
-                      {["clip", "lesson"].includes(contentType) && (
+                      {/* Voice (for clip/lesson/film, hidden when cast enabled) */}
+                      {["clip", "lesson", "film"].includes(contentType) && !castEnabled && (
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Voice</label>
                           <div className="flex items-center gap-2">
@@ -604,8 +631,8 @@ export default function OrchestratePage() {
                         </div>
                       )}
 
-                      {/* Narration mode (for clip/lesson) */}
-                      {["clip", "lesson"].includes(contentType) && (
+                      {/* Narration mode (for clip/lesson/film) */}
+                      {["clip", "lesson", "film"].includes(contentType) && (
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Narration</label>
                           <div className="flex gap-1">
@@ -629,8 +656,93 @@ export default function OrchestratePage() {
                     </div>
                   )}
 
-                  {/* BGM Picker (for clip/lesson) */}
-                  {["clip", "lesson"].includes(contentType) && selectedPipeline === "higgsfield" && (
+                  {/* Scene Count (film only) */}
+                  {contentType === "film" && selectedPipeline === "higgsfield" && (
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Scenes</label>
+                        <select
+                          value={sceneCount}
+                          onChange={(e) => setSceneCount(parseInt(e.target.value, 10))}
+                          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-300 outline-none"
+                        >
+                          {SCENE_COUNT_OPTIONS.map((n) => (
+                            <option key={n} value={n}>
+                              {n} scenes (~{n * 0.5} min, ~{Math.round(n * 2.5)} min gen)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cast Picker (multi-voice) — for clip/lesson/film */}
+                  {["clip", "lesson", "film"].includes(contentType) && selectedPipeline === "higgsfield" && (
+                    <div className="mb-4">
+                      <button
+                        onClick={() => setCastEnabled(!castEnabled)}
+                        className={clsx(
+                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition",
+                          castEnabled
+                            ? "bg-purple-500/10 text-purple-400 ring-1 ring-purple-500/20"
+                            : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                        )}
+                      >
+                        <Mic size={12} />
+                        {castEnabled ? `Cast: ${castRows.length} voices` : "Multi-Voice Cast"}
+                      </button>
+
+                      {castEnabled && (
+                        <div className="mt-2 space-y-2 rounded-lg border border-white/[0.08] bg-white/[0.02] p-3">
+                          {castRows.map((row, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={row.character}
+                                onChange={(e) => {
+                                  const updated = [...castRows];
+                                  updated[idx] = { ...updated[idx], character: e.target.value };
+                                  setCastRows(updated);
+                                }}
+                                placeholder="Character name"
+                                className="w-32 rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-zinc-300 outline-none"
+                              />
+                              <input
+                                type="text"
+                                value={row.voice}
+                                onChange={(e) => {
+                                  const updated = [...castRows];
+                                  updated[idx] = { ...updated[idx], voice: e.target.value };
+                                  setCastRows(updated);
+                                }}
+                                placeholder="voice_key"
+                                className="w-40 rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-zinc-300 outline-none"
+                              />
+                              {castRows.length > 2 && (
+                                <button
+                                  onClick={() => setCastRows(castRows.filter((_, i) => i !== idx))}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  <XCircle size={12} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          {castRows.length < 6 && (
+                            <button
+                              onClick={() => setCastRows([...castRows, { character: "", voice: "" }])}
+                              className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300"
+                            >
+                              <Plus size={10} /> Add voice
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* BGM Picker (for clip/lesson/film) */}
+                  {["clip", "lesson", "film"].includes(contentType) && selectedPipeline === "higgsfield" && (
                     <div className="mb-4">
                       <button
                         onClick={() => setBgmExpanded(!bgmExpanded)}
@@ -754,7 +866,7 @@ export default function OrchestratePage() {
                   )}
 
                   {/* Manual narration script */}
-                  {narrationMode === "manual" && ["clip", "lesson"].includes(contentType) && selectedPipeline === "higgsfield" && (
+                  {narrationMode === "manual" && ["clip", "lesson", "film"].includes(contentType) && selectedPipeline === "higgsfield" && (
                     <div className="mb-4">
                       <div className="mb-1 flex items-center justify-between">
                         <label className="text-[10px] font-medium uppercase tracking-wider text-muted">Narration Script</label>
@@ -876,8 +988,15 @@ export default function OrchestratePage() {
                         {job.type}
                       </span>
 
-                      {/* Narration mode badge (clip/lesson only) */}
-                      {["clip", "lesson"].includes(job.type) && job.narrationMode && (
+                      {/* Scene progress for film jobs */}
+                      {job.type === "film" && job.currentScene != null && job.totalScenes != null && (
+                        <span className="shrink-0 rounded bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-400">
+                          Scene {job.currentScene}/{job.totalScenes}
+                        </span>
+                      )}
+
+                      {/* Narration mode badge (clip/lesson/film) */}
+                      {["clip", "lesson", "film"].includes(job.type) && job.narrationMode && (
                         <span className={clsx(
                           "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
                           job.narrationMode === "auto"
@@ -917,8 +1036,8 @@ export default function OrchestratePage() {
                         </button>
                       )}
 
-                      {/* Open in Narration Studio link for completed clip/lesson jobs */}
-                      {job.status === "completed" && ["clip", "lesson"].includes(job.type) && (
+                      {/* Open in Narration Studio link for completed clip/lesson/film jobs */}
+                      {job.status === "completed" && ["clip", "lesson", "film"].includes(job.type) && (
                         <Link
                           href="/narration"
                           className="rounded p-0.5 text-zinc-600 transition hover:bg-purple-500/20 hover:text-purple-400"
